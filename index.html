@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonoma & the North Coast: A Wine Master's Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-content {
+            max-height: 80vh;
+        }
+        .prose-purple a {
+            color: #9333ea;
+        }
+        .prose-purple a:hover {
+            color: #7e22ce;
+        }
+        .timeline-item.selected {
+            background-color: #6b21a8;
+            color: white;
+        }
+        .flashcard-container {
+            perspective: 1000px;
+        }
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .flashcard.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        .flashcard-front {
+            background-color: #374151; /* gray-700 */
+        }
+        .flashcard-back {
+            background-color: #4b5563; /* gray-600 */
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div id="main-menu" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <h1 class="text-4xl md:text-5xl font-bold text-purple-400 mb-2 text-center">Sonoma & the North Coast</h1>
+        <h2 class="text-2xl md:text-3xl font-semibold mb-8 text-center">A Wine Master's Challenge</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl mb-8">
+            <button data-module="historian" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Historian's Scroll</h3>
+                <p class="text-gray-400">Order the key events that shaped Sonoma & the North Coast.</p>
+            </button>
+            <button data-module="terroir" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Terroir Architect</h3>
+                <p class="text-gray-400">Master the soils, climate, and geography.</p>
+            </button>
+            <button data-module="ampelographer" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Ampelographer's Challenge</h3>
+                <p class="text-gray-400">Identify the region's key grape varieties and clones.</p>
+            </button>
+            <button data-module="lawmaker" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Lawmaker's Desk</h3>
+                <p class="text-gray-400">Navigate the complexities of AVA law and winemaking regulations.</p>
+            </button>
+            <button data-module="gastronome" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Gastronome's Table</h3>
+                <p class="text-gray-400">Explore classic food pairings and local cuisine.</p>
+            </button>
+            <button data-module="critic" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                <h3 class="text-xl font-bold mb-2">The Critic's Corner</h3>
+                <p class="text-gray-400">Analyze vintages and iconic producers.</p>
+            </button>
+        </div>
+
+        <div class="w-full max-w-4xl">
+             <button data-module="flashcard" class="module-btn bg-gray-800 p-6 rounded-lg hover:bg-purple-700 transition-colors duration-300 w-full">
+                <h3 class="text-xl font-bold mb-2">Flashcard Study</h3>
+                <p class="text-gray-400">Build your knowledge with targeted review.</p>
+            </button>
+        </div>
+        
+        <button id="ai-settings-btn" class="mt-8 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+            ⚙️ AI Settings
+        </button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
+        <!-- Content will be injected here -->
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content-wrapper" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl modal-content overflow-y-auto">
+            <!-- Modal content will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // This object contains the questions for the quiz modules
+        const gameData = {
+            historian: {
+                title: "The Historian's Scroll",
+                instructions: "For each of the 5 challenges, arrange the historical events in chronological order from earliest to latest. Tap an event to add it to your timeline, then submit your answer.",
+                questions: [
+                    {
+                        question: "Arrange these foundational events in Sonoma's early history.",
+                        events: [
+                            { text: "Russian colonists plant the first recorded Vitis vinifera vines at Fort Ross.", date: 1812 },
+                            { text: "Father Jose Altamira plants vines at Mission San Francisco Solano.", date: 1823 },
+                            { text: "General Mariano Vallejo secularizes the mission and develops his own vineyards.", date: 1834 },
+                            { text: "Agoston Haraszthy founds Buena Vista Winery, California's first premium commercial winery.", date: 1857 },
+                            { text: "Phylloxera is first identified in California at Buena Vista.", date: 1873 },
+                        ]
+                    },
+                    {
+                        question: "Order the establishment of these key Sonoma County AVAs.",
+                        events: [
+                            { text: "Sonoma Valley becomes the county's first federally recognized AVA.", date: 1981 },
+                            { text: "Russian River Valley, Chalk Hill, and Dry Creek Valley AVAs are established.", date: 1983 },
+                            { text: "Alexander Valley AVA is established.", date: 1984 },
+                            { text: "The vast Sonoma Coast AVA is established.", date: 1987 },
+                            { text: "The West Sonoma Coast AVA is established, refining the definition of the 'true' coast.", date: 2022 },
+                        ]
+                    },
+                    {
+                        question: "Place these pivotal moments of Sonoma's modern quality revolution in order.",
+                        events: [
+                            { text: "Hanzell plants some of North America's oldest continually producing Pinot Noir and Chardonnay.", date: 1953 },
+                            { text: "Joe Rochioli Jr. and Joseph Swan begin championing Pinot Noir in the Russian River Valley.", date: 1960 }, // Approx start
+                            { text: "Rodney Strong releases the first single-vineyard designated Cabernet Sauvignon from Alexander Valley.", date: 1976 },
+                            { text: "Iron Horse Vineyards is founded, recognizing Green Valley's potential for sparkling wine.", date: 1976 },
+                            { text: "The Judgment of Paris boosts California wine's reputation; the winning Chardonnay is nearly 75% Sonoma fruit.", date: 1976 },
+                        ]
+                    },
+                    {
+                        question: "Sequence the establishment of these important North Coast wineries.",
+                        events: [
+                            { text: "Gundlach Bundschu is founded, becoming one of Sonoma's enduring family wineries.", date: 1858 },
+                            { text: "Korbel is founded, becoming the oldest continually operating méthode champenoise house in North America.", date: 1882 },
+                            { text: "Husch Vineyards becomes the first bonded winery in Anderson Valley.", date: 1971 },
+                            { text: "Roederer Estate is established in Anderson Valley, a major endorsement for the region's sparkling wine potential.", date: 1982 },
+                            { text: "The Wagner Family (Caymus) invests heavily in Suisun Valley, creating Caymus-Suisun.", date: 2010 }, // Approx start of investment
+                        ]
+                    },
+                     {
+                        question: "Arrange these key legal and commercial developments in the North Coast.",
+                        events: [
+                            { text: "The North Coast AVA is established, encompassing Sonoma, Napa, Mendocino, and other counties.", date: 1983 },
+                            { text: "The Lake County Winegrape Commission is formed to support growers.", date: 1991 },
+                            { text: "Andy Beckstoffer begins investing in Lake County's Red Hills, bringing major credibility.", date: 1997 },
+                            { text: "Sonoma County's conjunctive labeling law goes into full effect.", date: 2014 },
+                            { text: "Mendocino County's conjunctive labeling law goes into effect.", date: 2023 },
+                        ]
+                    }
+                ]
+            },
+            terroir: {
+                title: "The Terroir Architect",
+                instructions: "Answer 10 multiple-choice questions about the geology, geography, and climate of Sonoma & the North Coast.",
+                questions: [
+                    { q: "What is the name of the chaotic assemblage of marine sedimentary and metamorphic rocks that forms the parent material for many Sonoma soils?", a: "Franciscan Complex", o: ["Sonoma Volcanics", "Wilson Grove Formation", "Great Valley Sequence"] },
+                    { q: "The celebrated 'Goldridge' soil series, prized for Pinot Noir and Chardonnay, is primarily what texture?", a: "Fine sandy loam", o: ["Heavy clay loam", "Gravelly loam", "Volcanic tuff"] },
+                    { q: "The Mayacamas Mountains create a critical rain shadow, separating Sonoma County from which other major wine region?", a: "Napa Valley", o: ["Mendocino County", "Lake County", "Marin County"] },
+                    { q: "What is the name of the wind gap that funnels cool marine air and fog from the Pacific into southern Sonoma County?", a: "Petaluma Gap", o: ["Russian River Corridor", "Crane Canyon", "Bodega Bay Inlet"] },
+                    { q: "The Red Hills AVA in Lake County is defined by its iron-rich volcanic soils littered with what black, glassy rock?", a: "Obsidian", o: ["Basalt", "Shale", "Serpentine"] },
+                    { q: "A significant diurnal temperature shift in Sonoma County, often 35-40°F, is primarily caused by what phenomenon?", a: "The daily intrusion of Pacific fog", o: ["High elevation", "Low humidity", "The thermal mass of rivers"] },
+                    { q: "The Huichica soil series, found in Los Carneros, is characterized by a high content of what, making it water-retentive?", a: "Clay", o: ["Sand", "Gravel", "Volcanic ash"] },
+                    { q: "The Anderson Valley in Mendocino County has a rare transverse orientation (east-west), which allows it to draw in cool air from what source?", a: "The Pacific Ocean via the Navarro River", o: ["The San Pablo Bay", "Clear Lake", "The Russian River"] },
+                    { q: "Vineyards in high-elevation AVAs like Rockpile and Fort Ross-Seaview are often planted above what climatic feature?", a: "The fog line", o: ["The frost line", "The tree line", "The inversion layer"] },
+                    { q: "The Suisun Valley in Solano County is heavily moderated by persistent winds blowing from which body of water?", a: "San Pablo Bay", o: ["The Pacific Ocean", "The Sacramento River Delta", "Clear Lake"] },
+                    { q: "What geological formation, composed of ancient volcanic rock and ash, is prevalent in eastern Sonoma County AVAs like Knights Valley and Moon Mountain?", a: "Sonoma Volcanics", o: ["Franciscan Complex", "Great Valley Alluvium", "Wilson Grove Formation"] },
+                    { q: "The Mendocino Ridge AVA is unique in the US because its legal definition is based on what?", a: "It is non-contiguous and defined by elevation (above 1,200 feet)", o: ["It is defined by a single soil type", "It is the only AVA that crosses a county line", "It is exclusively for organic viticulture"] },
+                    { q: "The high elevation of Lake County vineyards results in up to 10% greater exposure to what, which can lead to thicker grape skins?", a: "UV light", o: ["Wind", "Rainfall", "Humidity"] },
+                    { q: "The 'Deep End' is a local term for the coolest, most coastal part of which AVA?", a: "Anderson Valley", o: ["Russian River Valley", "Sonoma Coast", "Petaluma Gap"] },
+                    { q: "The Felta series gravelly loams, ideal for Zinfandel and Cabernet, are alluvial soils found in which two AVAs?", a: "Dry Creek Valley and Alexander Valley", o: ["Russian River Valley and Sonoma Coast", "Los Carneros and Bennett Valley", "Knights Valley and Moon Mountain"] },
+                    { q: "What is the primary viticultural risk associated with the early-budding Chardonnay and Pinot Noir in the cool Russian River Valley?", a: "Spring frost", o: ["Drought", "Wildfire", "Excessive heat"] },
+                    { q: "The soils of the Big Valley District AVA in Lake County are primarily formed from what?", a: "Lake-deposited clay and loam", o: ["Uplifted marine sandstone", "Recent volcanic flows", "Weathered granite"] },
+                    { q: "Chalk Hill AVA is named for its unique soils composed of what?", a: "White volcanic ash", o: ["True limestone chalk", "Diatomaceous earth", "Decomposed granite"] },
+                    { q: "The Wilson Grove Formation, parent to Goldridge soils, is primarily composed of what?", a: "Uplifted marine sandstone", o: ["Volcanic basalt", "Metamorphic schist", "Alluvial clay"] },
+                    { q: "Which mountain range forms the eastern border of Sonoma County?", a: "Mayacamas Mountains", o: ["Coastal Range", "Sierra Nevada", "Vaca Mountains"] },
+                    { q: "What is the largest freshwater lake entirely within California, which provides a major moderating influence for Lake County viticulture?", a: "Clear Lake", o: ["Lake Sonoma", "Lake Berryessa", "Lake Tahoe"] },
+                    { q: "The term 'inversion layer' refers to a phenomenon where cold air settles near the ground. This is common in which Sonoma AVA?", a: "Russian River Valley", o: ["Rockpile", "Knights Valley", "Moon Mountain"] },
+                    { q: "The soils of Solano County's AVAs are primarily part of which large geological province?", a: "Great Valley Geomorphic Province", o: ["Franciscan Complex", "Sierra Nevada Batholith", "Salinian Block"] },
+                    { q: "Which AVA is a transverse valley in Lake County known for its fast winds and wild weather?", a: "High Valley AVA", o: ["Red Hills Lake County AVA", "Big Valley District AVA", "Kelsey Bench AVA"] },
+                    { q: "The 'Ricetti bench' in Mendocino is known for its distinctive soils of what color?", a: "Crimson red", o: ["Chalky white", "Black obsidian", "Gold-tinged sand"] },
+                    { q: "Which Sonoma AVA is a small, elevated valley surrounded by hills, with Merlot as its most planted variety?", a: "Bennett Valley", o: ["Knights Valley", "Green Valley", "Chalk Hill"] },
+                    { q: "The soils of Moon Mountain District are almost entirely derived from what parent material?", a: "Volcanic rock (basalt and tuff)", o: ["Marine sandstone", "Alluvial gravel", "Clay loam"] },
+                    { q: "Which river is the primary waterway shaping the terroir of the Russian River Valley and Alexander Valley?", a: "Russian River", o: ["Napa River", "Navarro River", "Gualala River"] },
+                    { q: "The Yorkville Highlands AVA in Mendocino is characterized by what soil type?", a: "Rocky soils with high gravel content", o: ["Deep alluvial loam", "Heavy clay", "Fine sandy loam"] },
+                    { q: "What is the primary reason that the far West Sonoma Coast is a challenging but rewarding place for viticulture?", a: "Extreme maritime influence (wind, fog, cool temperatures)", o: ["High risk of wildfire", "Poorly draining soils", "Lack of water for irrigation"] },
+                    { q: "The proximity of Los Carneros to what body of water is the key to its cool climate?", a: "San Pablo Bay", o: ["The Pacific Ocean", "The Russian River", "Clear Lake"] },
+                    { q: "What is the approximate elevation range for vineyards in the Pine Mountain-Cloverdale Peak AVA?", a: "1,600 to 3,000 feet", o: ["Sea level to 400 feet", "400 to 1,200 feet", "800 to 1,500 feet"] },
+                    { q: "Which AVA is a non-contiguous appellation in Mendocino County?", a: "Mendocino Ridge", o: ["Anderson Valley", "Yorkville Highlands", "Redwood Valley"] },
+                    { q: "The 'Sonoma County Sustainable' program focuses on environmental, social, and what other pillar of sustainability?", a: "Economic", o: ["Political", "Historical", "Technological"] },
+                    { q: "The Fountaingrove District AVA is located on the steep western slopes of which mountain range?", a: "Mayacamas Mountains", o: ["Sonoma Mountains", "Coastal Range", "Vaca Mountains"] },
+                    { q: "Which two grape varieties thrive in the cool, foggy Green Valley of Russian River Valley, especially for sparkling wine?", a: "Pinot Noir and Chardonnay", o: ["Zinfandel and Petite Sirah", "Cabernet Sauvignon and Merlot", "Sauvignon Blanc and Semillon"] },
+                    { q: "The Kelsey Bench AVA in Lake County is a transitional region between the alluvial valley floor and what?", a: "Elevated volcanic sites", o: ["Coastal hills", "River terraces", "Dense redwood forests"] },
+                    { q: "What is the dominant soil type in Knights Valley?", a: "Alluvial soils with volcanic components", o: ["Fine sandy loam", "Heavy clay", "Marine sandstone"] },
+                    { q: "The climate of the Alexander Valley is generally classified as what Winkler Region?", a: "Region III", o: ["Region I", "Region II", "Region IV"] },
+                    { q: "What is the primary geological feature that defines the Rockpile AVA's terroir?", a: "High elevation (above 800 feet) and rocky, shallow soils", o: ["Deep alluvial soils and proximity to the river", "Cool fog and marine influence", "Volcanic ash and obsidian"] },
+                    { q: "Which of these Mendocino AVAs is known for its hot interior climate?", a: "Redwood Valley", o: ["Anderson Valley", "Mendocino Ridge", "Yorkville Highlands"] },
+                    { q: "The high iron content in the volcanic soils of Red Hills Lake County contributes to what characteristic in its Cabernet Sauvignon wines?", a: "Firm structure and tannins", o: ["High acidity", "Floral aromatics", "Low alcohol"] },
+                    { q: "The 'shoulders' or 'wings' of a Zinfandel cluster are often removed to mitigate what issue?", a: "Uneven ripening", o: ["Sunburn", "Bird damage", "Frost damage"] },
+                    { q: "What is the primary agricultural concern related to the increasing frequency of drought in the North Coast?", a: "Groundwater depletion and water rights", o: ["Increased pest pressure", "Soil erosion", "Nutrient deficiency"] },
+                    { q: "Which AVA is a small, elevated region known for high-quality Syrah, located between Alexander Valley and Anderson Valley?", a: "Yorkville Highlands", o: ["Pine Mountain-Cloverdale Peak", "Cole Ranch", "McDowell Valley"] },
+                    { q: "The Suisun Valley and Green Valley in Solano County are located in the foothills of which mountain range?", a: "Vaca Mountains", o: ["Mayacamas Mountains", "Sonoma Mountains", "Coastal Range"] },
+                    { q: "What is the primary viticultural benefit of the rocky, well-draining soils on the hillsides of Alexander Valley?", a: "They stress the vines, leading to concentrated fruit.", o: ["They retain water, preventing drought.", "They warm up quickly, accelerating ripening.", "They are rich in nutrients, increasing yields."] },
+                    { q: "The 'Bearwallow' soil series is a type of thin sandstone soil found in the ridgetops of which AVA?", a: "Anderson Valley", o: ["Dry Creek Valley", "Red Hills Lake County", "Suisun Valley"] },
+                    { q: "What is the most significant climatic difference between the western and eastern parts of Mendocino County?", a: "The west is cool and maritime; the east is warm and continental.", o: ["The west is dry; the east is wet.", "The west has high elevation; the east is at sea level.", "The west is foggy; the east is windy."] },
+                    { q: "The geology of the McDowell Valley AVA in Mendocino is unique for its concentration of what rock type?", a: "Quartzite", o: ["Granite", "Limestone", "Schist"] }
+                ]
+            },
+            ampelographer: {
+                title: "The Ampelographer's Challenge",
+                instructions: "Answer 10 multiple-choice questions about the key grape varieties and clones of Sonoma & the North Coast. After a correct answer, you may have the option to generate an AI profile.",
+                questions: [
+                    { q: "Which heritage Chardonnay selections, known for 'hens and chicks' (millerandage), are the foundation of California's finest Chardonnays?", a: "Wente Selections", o: ["Dijon Clones", "Prosser Clones", "Musqué Clones"], subjectType: 'clone', subjectName: 'Wente Clone Chardonnay' },
+                    { q: "Which heritage Pinot Noir clone, propagated by a Sonoma pioneer, is prized for its exceptionally aromatic profile of wild strawberry and spice?", a: "Swan Clone", o: ["Pommard Clone", "Martini Clone", "Dijon 115"], subjectType: 'clone', subjectName: 'Swan Clone Pinot Noir' },
+                    { q: "DNA analysis confirmed that Zinfandel is genetically identical to which Croatian grape?", a: "Crljenak Kaštelanski", o: ["Plavac Mali", "Teran", "Pošip"], subjectType: 'grape', subjectName: 'Zinfandel' },
+                    { q: "What is the most planted grape variety in Sonoma County?", a: "Chardonnay", o: ["Pinot Noir", "Cabernet Sauvignon", "Zinfandel"], subjectType: 'grape', subjectName: 'Sonoma County Chardonnay' },
+                    { q: "The Dijon clones of Pinot Noir (e.g., 115, 667, 777) are generally known for producing wines with what characteristics compared to heritage clones?", a: "Deeper color and more structured tannins", o: ["Higher acidity and lower alcohol", "More earthy and savory notes", "Lighter color and softer texture"], subjectType: 'clone', subjectName: 'Dijon Clones Pinot Noir' },
+                    { q: "Which grape variety is the undisputed signature of the Dry Creek Valley AVA?", a: "Zinfandel", o: ["Cabernet Sauvignon", "Pinot Noir", "Sauvignon Blanc"], subjectType: 'grape', subjectName: 'Dry Creek Valley Zinfandel' },
+                    { q: "The term 'head-trained' refers to a traditional, stake-based vine training system classic for which Sonoma grape?", a: "Old Vine Zinfandel", o: ["High-density Pinot Noir", "Cane-pruned Sauvignon Blanc", "Cordon-trained Cabernet Sauvignon"], subjectType: 'viticulture', subjectName: 'Head-Trained Vines' },
+                    { q: "Which grape is the most planted red variety in Sonoma County?", a: "Pinot Noir", o: ["Cabernet Sauvignon", "Zinfandel", "Merlot"], subjectType: 'grape', subjectName: 'Sonoma County Pinot Noir' },
+                    { q: "The Robert Young clone (FPS 17) is a famous Wente selection of Chardonnay sourced from which AVA?", a: "Alexander Valley", o: ["Russian River Valley", "Sonoma Coast", "Los Carneros"], subjectType: 'clone', subjectName: 'Robert Young Clone Chardonnay' },
+                    { q: "Which grape variety is the star of the high-elevation, volcanic Red Hills AVA in Lake County?", a: "Cabernet Sauvignon", o: ["Pinot Noir", "Zinfandel", "Syrah"], subjectType: 'grape', subjectName: 'Red Hills Lake County Cabernet Sauvignon' },
+                    { q: "The 'Pommard' clone of Pinot Noir is known for producing wines with what kind of flavor profile?", a: "Earthy, savory notes and red fruit", o: ["Dark fruit, deep color, and firm tannins", "Floral, spicy, and highly aromatic", "Citrus, mineral, and high acidity"], subjectType: 'clone', subjectName: 'Pommard Clone Pinot Noir' },
+                    { q: "Which white grape is the second-most planted in Sonoma County and a specialty of Dry Creek Valley?", a: "Sauvignon Blanc", o: ["Pinot Gris", "Viognier", "Chenin Blanc"], subjectType: 'grape', subjectName: 'Sonoma County Sauvignon Blanc' },
+                    { q: "The Zinfandel Heritage Vineyard Project, a collaboration between ZAP and UC Davis, aims to do what?", a: "Identify and preserve superior genetic material from historic sites", o: ["Develop new, disease-resistant Zinfandel clones", "Map the genetic code of the Zinfandel grape", "Promote the planting of Zinfandel in cool climates"], subjectType: 'viticulture', subjectName: 'Zinfandel Heritage Vineyard Project' },
+                    { q: "Which grape variety is a signature of the Suisun Valley in Solano County, producing deep and powerful wines?", a: "Petite Sirah", o: ["Cabernet Sauvignon", "Zinfandel", "Merlot"], subjectType: 'grape', subjectName: 'Suisun Valley Petite Sirah' },
+                    { q: "The practice of cane pruning (Guyot system) is most commonly used for which two varieties in Sonoma's cooler regions?", a: "Pinot Noir and Chardonnay", o: ["Zinfandel and Petite Sirah", "Cabernet Sauvignon and Merlot", "Syrah and Grenache"], subjectType: 'viticulture', subjectName: 'Cane Pruning' },
+                    { q: "Which grape variety is the most important for traditional method sparkling wine production in Anderson Valley?", a: "Pinot Noir", o: ["Chardonnay", "Pinot Meunier", "Pinot Blanc"], subjectType: 'grape', subjectName: 'Anderson Valley Sparkling Wine' },
+                    { q: "What is the primary viticultural challenge associated with Zinfandel that makes picking decisions difficult?", a: "Uneven ripening within a single cluster", o: ["Susceptibility to spring frost", "Vulnerability to Pierce's Disease", "Excessive vegetative growth"], subjectType: 'grape', subjectName: 'Zinfandel' },
+                    { q: "The term 'field blend' refers to a wine made from multiple grape varieties that are...", a: "Planted, harvested, and co-fermented together from the same vineyard", o: ["Blended from different vineyards after fermentation", "A mix of red and white grapes", "Sourced from certified organic fields"], subjectType: 'viticulture', subjectName: 'Field Blend' },
+                    { q: "Which grape is the most planted in the cool, coastal Anderson Valley?", a: "Pinot Noir", o: ["Chardonnay", "Riesling", "Syrah"], subjectType: 'grape', subjectName: 'Anderson Valley Pinot Noir' },
+                    { q: "The 'Sauvignon Musqué' clone is a selection of Sauvignon Blanc known for what characteristic?", a: "A more aromatic and floral profile", o: ["Higher acidity and greener notes", "Larger clusters and higher yields", "Thicker skins and greater structure"], subjectType: 'clone', subjectName: 'Sauvignon Musqué' },
+                    { q: "Which grape variety is the most planted in Lake County overall?", a: "Cabernet Sauvignon", o: ["Sauvignon Blanc", "Zinfandel", "Merlot"], subjectType: 'grape', subjectName: 'Lake County Cabernet Sauvignon' },
+                    { q: "What is the primary reason for the success of aromatic white varieties like Gewürztraminer and Riesling in Anderson Valley?", a: "The long, cool growing season preserves their delicate aromatics and acidity", o: ["The volcanic soils add a unique mineral character", "The high elevation provides intense sunlight", "The traditional use of dry farming concentrates flavors"], subjectType: 'grape', subjectName: 'Anderson Valley Aromatic Whites' },
+                    { q: "Which Bordeaux variety is Sonoma's fourth most planted red grape and excels in Bennett Valley?", a: "Merlot", o: ["Cabernet Franc", "Malbec", "Petit Verdot"], subjectType: 'grape', subjectName: 'Sonoma County Merlot' },
+                    { q: "The 'Calera' clone is another famous 'suitcase' clone of which grape variety?", a: "Pinot Noir", o: ["Chardonnay", "Zinfandel", "Syrah"], subjectType: 'clone', subjectName: 'Calera Clone Pinot Noir' },
+                    { q: "Which Rhône variety is gaining a reputation for quality in the cool, high-elevation vineyards of the West Sonoma Coast and Yorkville Highlands?", a: "Syrah", o: ["Grenache", "Mourvèdre", "Viognier"], subjectType: 'grape', subjectName: 'North Coast Syrah' },
+                    { q: "The term 'high-density planting' refers to placing vines closer together to...", a: "Encourage root competition and reduce individual vine vigor", o: ["Make mechanical harvesting easier", "Increase the total yield per acre", "Provide more shade to the fruit"], subjectType: 'viticulture', subjectName: 'High-Density Planting' },
+                    { q: "What is the most planted grape variety in the Alexander Valley AVA?", a: "Cabernet Sauvignon", o: ["Chardonnay", "Zinfandel", "Merlot"], subjectType: 'grape', subjectName: 'Alexander Valley Cabernet Sauvignon' },
+                    { q: "The historic Hanzell vineyard contains the oldest continually producing North American plantings of Pinot Noir and what other grape?", a: "Chardonnay", o: ["Zinfandel", "Cabernet Sauvignon", "Riesling"], subjectType: 'producer', subjectName: 'Hanzell Vineyards' },
+                    { q: "Which teinturier grape, known for its red flesh and juice, is often found in old Zinfandel field blends?", a: "Alicante Bouschet", o: ["Petite Sirah", "Carignan", "Mourvèdre"], subjectType: 'grape', subjectName: 'Alicante Bouschet' },
+                    { q: "Which grape variety is NOT one of the top 7 most planted in Sonoma County?", a: "Pinot Gris", o: ["Chardonnay", "Pinot Noir", "Merlot"], subjectType: 'grape', subjectName: 'Sonoma County' },
+                    { q: "The 'Old Wente' clone is famous for what viticultural characteristic?", a: "Millerandage ('hens and chicks')", o: ["Loose clusters", "Thick skins", "Early ripening"], subjectType: 'clone', subjectName: 'Wente Clone Chardonnay' },
+                    { q: "Which Italian variety, a reflection of Sonoma's heritage, has nearly 300 acres planted in the county?", a: "Sangiovese", o: ["Barbera", "Nebbiolo", "Montepulciano"], subjectType: 'grape', subjectName: 'Sonoma County Sangiovese' },
+                    { q: "What is the primary reason Pinot Meunier is grown in Sonoma?", a: "As a component for sparkling wine", o: ["For single-varietal red wines", "As a blending grape for Pinot Noir", "For rosé production"], subjectType: 'grape', subjectName: 'Pinot Meunier' },
+                    { q: "Which grape variety is known for its success in the volcanic soils of Knights Valley?", a: "Cabernet Sauvignon", o: ["Pinot Noir", "Zinfandel", "Chardonnay"], subjectType: 'grape', subjectName: 'Knights Valley Cabernet Sauvignon' },
+                    { q: "The term 'whole-cluster fermentation' is a technique often used with Pinot Noir and Syrah that involves what?", a: "Fermenting grapes without de-stemming them", o: ["Fermenting only the largest, most intact clusters", "A pre-fermentation cold soak of whole berries", "Using only free-run juice from uncrushed grapes"], subjectType: 'viticulture', subjectName: 'Whole-Cluster Fermentation' },
+                    { q: "Which heritage grape, often found in old field blends, is the French variety Carignan?", a: "Carignan", o: ["Cinsault", "Grenache", "Mourvèdre"], subjectType: 'grape', subjectName: 'Carignan' },
+                    { q: "Which grape is the most planted in the Petaluma Gap AVA?", a: "Pinot Noir", o: ["Chardonnay", "Syrah", "Sauvignon Blanc"], subjectType: 'grape', subjectName: 'Petaluma Gap Pinot Noir' },
+                    { q: "The success of Sauvignon Blanc in the Big Valley District of Lake County is attributed to its...", a: "Cooler climate and alluvial soils", o: ["High elevation and volcanic soils", "Intense sunlight and low humidity", "Proximity to Clear Lake's moderating influence"], subjectType: 'grape', subjectName: 'Lake County Sauvignon Blanc' },
+                    { q: "Which grape variety is NOT a classic component of a Bordeaux-style blend?", a: "Syrah", o: ["Cabernet Sauvignon", "Merlot", "Cabernet Franc"], subjectType: 'wine_style', subjectName: 'Bordeaux Blend' },
+                    { q: "What is the primary grape used for the Coro Mendocino blend?", a: "Zinfandel", o: ["Syrah", "Petite Sirah", "Sangiovese"], subjectType: 'wine_style', subjectName: 'Coro Mendocino' },
+                    { q: "Which grape variety is the most planted in the Yorkville Highlands of Mendocino?", a: "Cabernet Sauvignon", o: ["Pinot Noir", "Syrah", "Sauvignon Blanc"], subjectType: 'grape', subjectName: 'Yorkville Highlands Cabernet Sauvignon' },
+                    { q: "What is the primary difference between Zinfandel and Primitivo?", a: "They are genetically identical but represent different clonal selections from Croatia and Italy", o: ["Primitivo is a mutation of Zinfandel", "They are completely different grape varieties", "Zinfandel is used for red wine, Primitivo for white"], subjectType: 'grape', subjectName: 'Zinfandel and Primitivo' },
+                    { q: "Which grape variety is known for its thin skins, making it susceptible to botrytis?", a: "Pinot Noir", o: ["Cabernet Sauvignon", "Petite Sirah", "Zinfandel"], subjectType: 'grape', subjectName: 'Pinot Noir' },
+                    { q: "The term 'Regulated Deficit Irrigation' (RDI) is a technique used to...", a: "Impose controlled water stress on the vine to concentrate flavors", o: ["Provide a constant and high volume of water to the vines", "Use recycled water for vineyard irrigation", "Comply with local water usage laws"], subjectType: 'viticulture', subjectName: 'Regulated Deficit Irrigation' },
+                    { q: "Which grape variety is the most planted in the Fountaingrove District AVA?", a: "Cabernet Sauvignon", o: ["Merlot", "Syrah", "Zinfandel"], subjectType: 'grape', subjectName: 'Fountaingrove District Cabernet Sauvignon' },
+                    { q: "The success of aromatic whites in Anderson Valley is often compared to which French region?", a: "Alsace", o: ["Loire Valley", "Bordeaux", "Northern Rhône"], subjectType: 'wine_style', subjectName: 'Anderson Valley Aromatic Whites' },
+                    { q: "Which grape is known for its naturally high acidity, making it ideal for sparkling wine base?", a: "Chardonnay", o: ["Viognier", "Marsanne", "Roussanne"], subjectType: 'grape', subjectName: 'Chardonnay' },
+                    { q: "Which grape variety is the most planted in the Rockpile AVA?", a: "Zinfandel", o: ["Cabernet Sauvignon", "Petite Sirah", "Syrah"], subjectType: 'grape', subjectName: 'Rockpile Zinfandel' },
+                    { q: "The term 'teinturier' refers to a grape variety with what characteristic?", a: "Red-colored pulp and juice", o: ["Naturally high sugar content", "A tendency to mutate easily", "Resistance to phylloxera"], subjectType: 'viticulture', subjectName: 'Teinturier Grapes' },
+                    { q: "Which grape is the most planted in the Solano County Green Valley AVA?", a: "Cabernet Sauvignon", o: ["Petite Sirah", "Chardonnay", "Zinfandel"], subjectType: 'grape', subjectName: 'Solano County Green Valley Cabernet Sauvignon' }
+                ]
+            },
+            lawmaker: {
+                title: "The Lawmaker's Desk",
+                instructions: "Answer 10 multiple-choice questions about the appellation laws and winemaking regulations of Sonoma & the North Coast.",
+                questions: [
+                    { q: "According to federal law, what is the minimum percentage of grapes that must come from a named AVA for it to appear on the label?", a: "85%", o: ["75%", "95%", "100%"] },
+                    { q: "Sonoma County's conjunctive labeling law requires that any wine labeled with a Sonoma AVA must also state what on the label?", a: "Sonoma County", o: ["North Coast", "California", "The specific vineyard"] },
+                    { q: "For a wine to be labeled with a single vineyard designation, what is the minimum percentage of grapes that must come from that vineyard?", a: "95%", o: ["85%", "100%", "75%"] },
+                    { q: "Which of these is NOT a legally mandated requirement for any Sonoma County AVA?", a: "Maximum yield per acre", o: ["Geographical boundaries", "Minimum 85% grape origin for AVA labeling", "Conjunctive labeling with 'Sonoma County'"] },
+                    { q: "The practice of chaptalization (adding sugar to must to increase alcohol) is what in California?", a: "Not permitted", o: ["Permitted in cool vintages", "Legal only for white wines", "Allowed up to 2% ABV increase"] },
+                    { q: "The 'Estate Bottled' designation requires that 100% of the grapes come from vineyards owned or controlled by the winery, and what else?", a: "The winery and vineyards must be in the same AVA, and the wine made there", o: ["The wine must be aged for a minimum of two years", "The wine must be certified organic", "The winery must be family-owned"] },
+                    { q: "Mendocino County enacted a conjunctive labeling law similar to Sonoma's, which went into effect in what year?", a: "2023", o: ["2014", "2019", "2021"] },
+                    { q: "The overarching North Coast AVA includes Sonoma, Napa, Mendocino, Lake, Marin, and which other county?", a: "Solano", o: ["Contra Costa", "Alameda", "Humboldt"] },
+                    { q: "Coro Mendocino is a unique wine consortium that sets its own rules. What is the primary grape variety for this blend?", a: "Zinfandel", o: ["Pinot Noir", "Syrah", "Cabernet Sauvignon"] },
+                    { q: "Are there any legally mandated aging requirements (e.g., minimum time in oak) for wines from Sonoma AVAs?", a: "No, aging is a stylistic choice left to the producer", o: ["Yes, 12 months for all red wines", "Yes, 6 months for Chardonnay", "Only for wines labeled 'Reserve'"] },
+                    { q: "What is the minimum percentage for a single grape variety to be named on a California wine label?", a: "75%", o: ["85%", "95%", "51%"] },
+                    { q: "The Mendocino Ridge AVA is a non-contiguous AVA defined by what specific criterion?", a: "Vineyards must be at an elevation of 1,200 feet or higher", o: ["Vineyards must be within 5 miles of the Pacific Ocean", "Only Zinfandel and Pinot Noir may be grown", "All vineyards must be dry-farmed"] },
+                    { q: "The Alcohol and Tobacco Tax and Trade Bureau (TTB) is the federal agency responsible for what?", a: "Establishing and regulating AVAs", o: ["Setting wine prices", "Certifying organic vineyards", "Reviewing and scoring wines"] },
+                    { q: "Which of these is the United States' smallest AVA, located entirely within Mendocino County?", a: "Cole Ranch", o: ["Rockpile", "Benmore Valley", "Guenoc Valley"] },
+                    { q: "The purpose of conjunctive labeling laws is primarily to do what?", a: "Build the brand equity and recognition of the larger county", o: ["Ensure higher quality standards for all wines", "Increase the price of wines from smaller AVAs", "Restrict the number of wineries in a region"] },
+                    { q: "Unlike many European appellations, U.S. AVAs do not regulate which of the following?", a: "Permitted grape varieties", o: ["Geographical boundaries", "The use of the AVA name on the label", "Minimum grape origin percentages"] },
+                    { q: "Which was the first AVA to be established in Sonoma County?", a: "Sonoma Valley", o: ["Russian River Valley", "Dry Creek Valley", "Sonoma Coast"] },
+                    { q: "The West Sonoma Coast AVA was established by petitioning to carve it out of which larger AVA?", a: "Sonoma Coast AVA", o: ["Russian River Valley AVA", "Northern Sonoma AVA", "Mendocino County"] },
+                    { q: "What is the legal status of acidification (adding tartaric acid) in California winemaking?", a: "It is a legal and common practice to ensure balance", o: ["It is illegal", "It is only permitted for white wines", "It requires a special permit from the TTB"] },
+                    { q: "Which of these AVAs straddles both Sonoma and Napa counties?", a: "Los Carneros", o: ["Knights Valley", "Wild Horse Valley", "Pine Mountain-Cloverdale Peak"] },
+                    { q: "The establishment of an AVA is done through a petition process to which organization?", a: "The TTB", o: ["The County Board of Supervisors", "The State Department of Agriculture", "A local winegrowers association"] },
+                    { q: "Which of these is NOT an official AVA in Sonoma County?", a: "Sebastopol Hills", o: ["Green Valley of Russian River Valley", "Petaluma Gap", "Fountaingrove District"] },
+                    { q: "The legal definition of an AVA is based on what?", a: "Distinguishing geographic, climatic, and historical features", o: ["A minimum quality score from a tasting panel", "The number of wineries in the area", "A vote by local residents"] },
+                    { q: "Which of these AVAs is shared between Sonoma and Mendocino counties?", a: "Pine Mountain-Cloverdale Peak", o: ["Eagle Peak Mendocino County", "Yorkville Highlands", "Redwood Valley"] },
+                    { q: "What percentage of grapes must come from Sonoma County for a wine to be labeled 'Sonoma County'?", a: "75%", o: ["85%", "95%", "100%"] },
+                    { q: "Which was the first AVA established in Lake County?", a: "Guenoc Valley", o: ["Clear Lake", "Red Hills Lake County", "High Valley"] },
+                    { q: "The legal framework for AVAs is found in which part of the Code of Federal Regulations?", a: "Title 27, Part 9", o: ["Title 21, Part 110", "Title 19, Part 134", "Title 40, Part 180"] },
+                    { q: "Can a winery in Sonoma make a wine from Napa grapes and label it with a Sonoma AVA?", a: "No, the origin of the grapes determines the AVA", o: ["Yes, as long as the winery is in Sonoma", "Yes, if it is less than 15% of the blend", "Only if it is labeled 'North Coast'"] },
+                    { q: "Which Solano County AVA was established in 1982?", a: "Suisun Valley", o: ["Solano County Green Valley", "Clarksburg", "Wild Horse Valley"] },
+                    { q: "The establishment of the West Sonoma Coast AVA in 2022 is an example of a trend towards what?", a: "Greater precision and the creation of smaller, more specific AVAs", o: ["Consolidating small AVAs into larger ones", "Eliminating AVAs that are not commercially successful", "Basing AVAs on political boundaries"] },
+                    { q: "Is there a legal definition for 'Old Vine' on a U.S. wine label?", a: "No, the term is unregulated and used at the producer's discretion", o: ["Yes, vines must be a minimum of 50 years old", "Yes, vines must be a minimum of 100 years old", "Yes, it is regulated by each individual AVA"] },
+                    { q: "Which of these is NOT a legally recognized AVA?", a: "The Deep End", o: ["Fort Ross-Seaview", "Moon Mountain District", "Bennett Valley"] },
+                    { q: "What is the TTB's tolerance for stated alcohol by volume (ABV) on a wine label for a wine that is 14.5% ABV?", a: "±1.0%", o: ["±1.5%", "±0.5%", "There is no tolerance"] },
+                    { q: "Which AVA was established in Mendocino County in 1983, the same year as Russian River Valley?", a: "Anderson Valley", o: ["McDowell Valley", "Potter Valley", "Yorkville Highlands"] },
+                    { q: "The 'Sonoma County Sustainable' logo on a bottle requires that at least 85% of the grapes come from a certified sustainable vineyard and what else?", a: "At least 85% of the grapes must be from Sonoma County", o: ["The wine must be 100% organic", "The winery must be solar-powered", "The bottle must be lightweight glass"] },
+                    { q: "Which of these is a legally defined AVA?", a: "Kelsey Bench-Lake County", o: ["Pocket Peak", "Eastside Road", "The True Sonoma Coast"] },
+                    { q: "The legal basis for the American AVA system is to provide information about what to the consumer?", a: "Origin", o: ["Quality", "Style", "Price"] },
+                    { q: "Can a wine from the Green Valley of Russian River Valley AVA be legally labeled as 'Sonoma Coast'?", a: "Yes, because Green Valley is located within the Sonoma Coast AVA", o: ["No, only the most specific AVA can be used", "Only if it is blended with wine from another part of Sonoma Coast", "Only if it is a sparkling wine"] },
+                    { q: "The establishment of the Petaluma Gap AVA was based primarily on what distinguishing feature?", a: "The persistent and defining influence of wind", o: ["A unique soil type", "A specific elevation range", "A historical settlement"] },
+                    { q: "What is the primary legal difference between an AVA and a county appellation?", a: "An AVA is a federally defined grape-growing area; a county is a political boundary.", o: ["County appellations have stricter rules than AVAs.", "AVAs require 100% origin, while counties require 75%.", "There is no legal difference."] },
+                    { q: "Which of these is the most recently established AVA in Mendocino County?", a: "Comptche", o: ["Eagle Peak Mendocino County", "Dos Rios", "Covelo"] },
+                    { q: "Are there any laws in Sonoma that restrict the use of specific clones for certain varieties?", a: "No, clonal selection is a producer's choice", o: ["Yes, only Wente clones are allowed for 'Sonoma Valley' Chardonnay", "Yes, only Dijon clones are allowed for Russian River Valley Pinot Noir", "Yes, for wines labeled 'Heritage'"] },
+                    { q: "Which of these is a legally defined AVA in Lake County?", a: "Big Valley District-Lake County", o: ["Amber Knolls", "Mount Konocti", "Obsidian Ridge"] },
+                    { q: "The TTB requires that a proposed AVA must be locally and/or nationally known by what?", a: "Its name", o: ["Its primary grape variety", "Its most famous winery", "Its soil type"] },
+                    { q: "Which of these is NOT a requirement for the Coro Mendocino blend?", a: "It must be 100% Cabernet Sauvignon", o: ["Zinfandel must be 40-70% of the blend", "It must meet specific aging protocols", "All grapes must be from Mendocino County"] },
+                    { q: "Which of these is a legally defined AVA?", a: "Solano County Green Valley", o: ["Laguna Ridge", "Sebastopol Hills", "Middle Reach"] },
+                    { q: "If a wine is a blend of 80% Sonoma County grapes and 20% Napa County grapes, what is the most specific appellation it can legally use?", a: "North Coast", o: ["Sonoma County", "California", "Napa-Sonoma"] },
+                    { q: "Which of these is a key reason the TTB might reject a proposed AVA petition?", a: "The proposed boundaries overlap with an existing AVA", o: ["The proposed name is not unique", "There is not enough evidence of distinguishing features", "All of the above"] },
+                    { q: "The legal framework for AVAs allows for a nested hierarchy. Which of these is an example?", a: "Green Valley AVA is nested within the Russian River Valley AVA", o: ["Dry Creek Valley AVA is adjacent to Alexander Valley AVA", "Sonoma Coast AVA is smaller than Sonoma County", "Rockpile AVA has a minimum elevation"] },
+                    { q: "What is the primary legal function of the Lake County Winegrape Commission?", a: "To support growers through marketing and research, not to set laws", o: ["To establish new AVAs within Lake County", "To enforce irrigation restrictions", "To set minimum grape prices"] }
+                ]
+            },
+            gastronome: {
+                title: "The Gastronome's Table",
+                instructions: "Answer 10 multiple-choice questions about the cuisine, ingredients, and classic pairings of Sonoma & the North Coast. After a correct answer, you may have the option to generate an AI explanation.",
+                questions: [
+                    { q: "A pan-seared breast of Liberty Duck from Petaluma is a classic pairing for which Sonoma wine?", a: "Russian River Valley Pinot Noir", o: ["Dry Creek Valley Zinfandel", "Alexander Valley Cabernet Sauvignon", "Sonoma Coast Chardonnay"], subjectType: 'wine_pairing', subjectName: 'Liberty Duck and Pinot Noir' },
+                    { q: "The briny character of fresh oysters from Bodega and Tomales Bays is a perfect match for which wine style?", a: "Sonoma County traditional method sparkling wine", o: ["A rich, oaked Chardonnay", "A powerful Petite Sirah", "A late-harvest Riesling"], subjectType: 'wine_pairing', subjectName: 'Oysters and Sparkling Wine' },
+                    { q: "Which heritage apple variety, centered around Sebastopol, is an icon of Sonoma's agricultural history?", a: "Gravenstein Apple", o: ["Fuji Apple", "Granny Smith Apple", "Red Delicious Apple"], subjectType: 'ingredient', subjectName: 'Gravenstein Apple' },
+                    { q: "A rack of Sonoma County lamb roasted with rosemary is the quintessential pairing for what wine?", a: "Alexander Valley Cabernet Sauvignon", o: ["Anderson Valley Pinot Noir", "Dry Creek Valley Sauvignon Blanc", "Los Carneros Chardonnay"], subjectType: 'wine_pairing', subjectName: 'Lamb and Cabernet Sauvignon' },
+                    { q: "Russian River Brewing Company is world-famous for its hop-forward ales, particularly which iconic Double IPA?", a: "Pliny the Elder", o: ["Blind Pig", "Heady Topper", "Lagunitas IPA"], subjectType: 'beverage', subjectName: 'Russian River Brewing Pliny the Elder' },
+                    { q: "Laura Chenel is a pioneering producer in Sonoma County, famous for what type of artisan product?", a: "Goat cheese (chèvre)", o: ["Sheep milk cheese", "Olive oil", "Cured salami"], subjectType: 'ingredient', subjectName: 'Laura Chenel Goat Cheese' },
+                    { q: "The sweet, delicate meat of Dungeness crab, a local winter delicacy, pairs best with which style of wine?", a: "A crisp, unoaked Chardonnay", o: ["A full-bodied Merlot", "A spicy Zinfandel", "A sweet Muscat"], subjectType: 'wine_pairing', subjectName: 'Dungeness Crab and Chardonnay' },
+                    { q: "Which Mendocino County distillery is a pioneer in craft whiskey, producing Bourbon and Rye?", a: "Sonoma Distilling Company", o: ["Charbay Distillery", "Alley 6 Craft Distillery", "Craft Distillers"], subjectType: 'beverage', subjectName: 'Sonoma Distilling Company' },
+                    { q: "The candy cap mushroom, found in Mendocino, is unique for what characteristic, making it popular in desserts?", a: "An intense aroma of maple syrup", o: ["A bright citrus flavor", "A savory, umami-rich taste", "A spicy, peppery note"], subjectType: 'ingredient', subjectName: 'Candy Cap Mushroom' },
+                    { q: "What is 'Boontling'?", a: "A local folk language from Boonville in Anderson Valley", o: ["A traditional method of dry-farming Zinfandel", "A type of artisan cheese from Petaluma", "A local music festival"], subjectType: 'culture', subjectName: 'Boontling' },
+                    { q: "Which Sonoma County town is famous for its historic Italian heritage and old vine Zinfandel?", a: "Healdsburg", o: ["Sebastopol", "Petaluma", "Sonoma"], subjectType: 'place', subjectName: 'Healdsburg' },
+                    { q: "The Black and Blue Wing Burger is an iconic dish from which North Coast county?", a: "Lake County", o: ["Mendocino County", "Sonoma County", "Solano County"], subjectType: 'dish', subjectName: 'Black and Blue Wing Burger' },
+                    { q: "Which of these is a major craft brewery founded in Petaluma that grew to become a national brand?", a: "Lagunitas Brewing Company", o: ["HenHouse Brewing Company", "Sierra Nevada Brewing Co.", "Bear Republic Brewing Co."], subjectType: 'beverage', subjectName: 'Lagunitas Brewing Company' },
+                    { q: "McEvoy Ranch and B.R. Cohn are recognized local producers of what artisanal product?", a: "Olive Oil", o: ["Artisan Bread", "Cider", "Charcuterie"], subjectType: 'ingredient', subjectName: 'Sonoma County Olive Oil' },
+                    { q: "A classic pairing for a tangy Sonoma County Sauvignon Blanc would be what local product?", a: "Fresh goat cheese (chèvre)", o: ["Aged cheddar", "Blue cheese", "Smoked gouda"], subjectType: 'wine_pairing', subjectName: 'Sauvignon Blanc and Goat Cheese' },
+                    { q: "Which Mendocino distillery, operating since 1983, is a pioneer in craft vodka, rum, and whiskey?", a: "Charbay Distillery", o: ["Mendocino Spirits", "Low Gap Whiskey", "Germain-Robin"], subjectType: 'beverage', subjectName: 'Charbay Distillery' },
+                    { q: "The cuisine of Mendocino County is heavily influenced by its proximity to the Pacific Ocean and what other major geographical feature?", a: "Vast redwood forests", o: ["The Russian River", "Clear Lake", "The Mayacamas Mountains"], subjectType: 'gastronomy', subjectName: 'Mendocino Cuisine' },
+                    { q: "What is Cioppino?", a: "A hearty fisherman's stew", o: ["A type of pasta", "A cured meat", "A soft cheese"], subjectType: 'dish', subjectName: 'Cioppino' },
+                    { q: "The annual, limited release of 'Pliny the Younger' Triple IPA is a major tourist event for which brewery?", a: "Russian River Brewing Company", o: ["Lagunitas Brewing Company", "Bear Republic Brewing Co.", "HenHouse Brewing Company"], subjectType: 'beverage', subjectName: 'Pliny the Younger' },
+                    { q: "The 'California Cheese Trail' features nearly 30 artisan cheesemakers from which county?", a: "Sonoma County", o: ["Mendocino County", "Lake County", "Marin County"], subjectType: 'gastronomy', subjectName: 'California Cheese Trail' },
+                    { q: "Which Solano County winery, revived in 2015, has a history dating back to 1854?", a: "Solano Brewing Company", o: ["Wooden Valley Winery", "Tolenas Vineyards", "Vezer Family Vineyard"], subjectType: 'beverage', subjectName: 'Solano Brewing Company' },
+                    { q: "Which of these is NOT a classic local ingredient from Mendocino County?", a: "Valencia Oranges", o: ["Dungeness Crab", "Wild Mushrooms", "Rockfish"], subjectType: 'ingredient', subjectName: 'Mendocino Ingredients' },
+                    { q: "A rich, barrel-fermented Sonoma Chardonnay would be a classic pairing for what local dish?", a: "Bingo Baked Oysters", o: ["Raw oysters on the half shell", "Spicy fish tacos", "A light green salad"], subjectType: 'wine_pairing', subjectName: 'Chardonnay and Baked Oysters' },
+                    { q: "What type of beverage is resurgent in Sonoma County, leveraging its history of apple cultivation?", a: "Hard Cider", o: ["Kombucha", "Craft Soda", "Mead"], subjectType: 'beverage', subjectName: 'Sonoma County Hard Cider' },
+                    { q: "The farm-to-table ethos of Sonoma County cuisine emphasizes what?", a: "Fresh, seasonal, and locally sourced ingredients", o: ["Imported luxury goods", "Molecular gastronomy techniques", "Traditional French recipes"], subjectType: 'gastronomy', subjectName: 'Sonoma Farm-to-Table' },
+                    { q: "Which of these is a key flavor profile of a classic Dry Creek Valley Zinfandel that pairs well with barbecue?", a: "Brambly fruit and spice", o: ["Delicate red fruit and floral notes", "High acidity and citrus", "Earthy and savory notes"], subjectType: 'wine_pairing', subjectName: 'Zinfandel and Barbecue' },
+                    { q: "The Temple of Kwan Tai in Mendocino is a monument to the history of which immigrant group?", a: "Chinese", o: ["Italian", "Russian", "Mexican"], subjectType: 'culture', subjectName: 'Temple of Kwan Tai' },
+                    { q: "What is the primary agricultural product of Petaluma, besides grapes?", a: "Eggs and poultry (Liberty Duck)", o: ["Apples and pears", "Dairy and cheese", "Olives and olive oil"], subjectType: 'ingredient', subjectName: 'Petaluma Agriculture' },
+                    { q: "A dry Rosé from Sonoma would be a good pairing for what type of dish?", a: "Cioppino", o: ["A rich beef stew", "A creamy pasta dish", "A sweet dessert"], subjectType: 'wine_pairing', subjectName: 'Rosé and Cioppino' },
+                    { q: "The Wolfskill Experimental Farm in Solano County is a symbol of the region's history in what?", a: "Horticultural innovation", o: ["Winemaking technology", "Sustainable farming", "Livestock breeding"], subjectType: 'culture', subjectName: 'Wolfskill Experimental Farm' }
+                ]
+            },
+            critic: {
+                title: "The Critic's Corner",
+                instructions: "Answer 10 multiple-choice questions about the vintages, producers, and market context of Sonoma & the North Coast. After a correct answer, you may have the option to generate an AI tasting note.",
+                questions: [
+                    { q: "Which producer is considered a benchmark for the rich, full-flavored style of Anderson Valley Pinot Noir?", a: "Goldeneye Winery", o: ["Roederer Estate", "Navarro Vineyards", "Husch Vineyards"], subjectType: 'producer', subjectName: 'Goldeneye Winery' },
+                    { q: "Which Sonoma vintage is hailed as a return to 'classic' normality, with a long, cool growing season and outstanding potential?", a: "2023", o: ["2020", "2017", "2015"], subjectType: 'vintage', subjectName: '2023 North Coast Vintage' },
+                    { q: "Which producer's 'La Joie', 'La Muse', and 'Le Désir' are among the most expensive and critically acclaimed wines from Sonoma County?", a: "Vérité", o: ["Peter Michael Winery", "Aubert Wines", "Marcassin"], subjectType: 'producer', subjectName: 'Vérité' },
+                    { q: "The 2011 North Coast vintage is generally characterized as what?", a: "Very cool, wet, and challenging, producing elegant, high-acid wines from top producers", o: ["Hot, dry, and powerful, producing highly concentrated wines", "A large, balanced, and classic vintage", "A vintage ruined by widespread wildfires"], subjectType: 'vintage', subjectName: '2011 North Coast Vintage' },
+                    { q: "Which Napa Valley icon's investment in Suisun Valley has dramatically raised the region's profile?", a: "The Wagner Family (Caymus)", o: ["The Mondavi Family", "Heitz Cellar", "Stag's Leap Wine Cellars"], subjectType: 'producer', subjectName: 'Caymus-Suisun' },
+                    { q: "Which of these producers is considered an 'Iconic Producer' or 'First Growth' for Sonoma Pinot Noir and Chardonnay?", a: "Kistler Vineyards", o: ["Seghesio Family Vineyards", "Rodney Strong Vineyards", "Decoy by Duckhorn"], subjectType: 'producer', subjectName: 'Kistler Vineyards' },
+                    { q: "The 2020 vintage in the North Coast was severely impacted by what major issue?", a: "Widespread wildfires and smoke taint", o: ["A severe spring frost", "A hurricane during harvest", "A record-breaking drought"], subjectType: 'vintage', subjectName: '2020 North Coast Vintage' },
+                    { q: "Which producer is a historical icon for Zinfandel, particularly from their Lytton Springs vineyard in Dry Creek Valley?", a: "Ridge Vineyards", o: ["Carlisle Winery & Vineyards", "Bedrock Wine Co.", "Martinelli Winery"], subjectType: 'producer', subjectName: 'Ridge Vineyards Lytton Springs' },
+                    { q: "Which Anderson Valley producer is the American outpost of a famous Champagne house and a benchmark for sparkling wine?", a: "Roederer Estate", o: ["Scharffenberger Cellars", "Iron Horse Vineyards", "Domaine Carneros"], subjectType: 'producer', subjectName: 'Roederer Estate' },
+                    { q: "The 2015 vintage in the North Coast was known for what characteristics?", a: "Hot, dry, and extremely low yields, resulting in powerful and concentrated wines", o: ["Cool, elegant, and balanced", "A large and bountiful harvest", "Wet and challenging with high disease pressure"], subjectType: 'vintage', subjectName: '2015 North Coast Vintage' },
+                    { q: "Which influential Napa grower's investment in the Red Hills AVA brought immediate credibility to Lake County?", a: "Andy Beckstoffer", o: ["David Abreu", "Randy Dunn", "Lee Hudson"], subjectType: 'producer', subjectName: 'Beckstoffer Vineyards in Lake County' },
+                    { q: "Which producer is considered a 'Value Champion' known for consistently excellent Zinfandel?", a: "Seghesio Family Vineyards", o: ["Williams Selyem", "Aubert Wines", "Vérité"], subjectType: 'producer', subjectName: 'Seghesio Family Vineyards' },
+                    { q: "Which vintage is celebrated as a superb, balanced, and classic year with a smooth growing season, similar to 2016 and 2019?", a: "2018", o: ["2017", "2015", "2011"], subjectType: 'vintage', subjectName: '2018 North Coast Vintage' },
+                    { q: "Which of these is considered a 'Rising Star' known for terroir-driven Pinot Noir and Syrah from Mendocino?", a: "Drew Family Wines", o: ["Goldeneye Winery", "Navarro Vineyards", "Parducci Wine Cellars"], subjectType: 'producer', subjectName: 'Drew Family Wines' },
+                    { q: "The 2013 vintage is described as a classic, balanced year that produced what style of wines?", a: "Structured and age-worthy", o: ["Light and simple", "Overly ripe and alcoholic", "Acidic and lean"], subjectType: 'vintage', subjectName: '2013 North Coast Vintage' },
+                    { q: "Which producer is a historical icon in Mendocino, founded in 1932 and the only local winery to survive Prohibition?", a: "Parducci Wine Cellars", o: ["Husch Vineyards", "Fetzer Vineyards", "Bonterra Vineyards"], subjectType: 'producer', subjectName: 'Parducci Wine Cellars' },
+                    { q: "Which of these is an iconic producer of Sonoma County Cabernet Sauvignon, with a famous estate in Alexander Valley?", a: "Silver Oak Cellars", o: ["Kistler Vineyards", "Rochioli Vineyards", "Iron Horse Vineyards"], subjectType: 'producer', subjectName: 'Silver Oak Cellars' },
+                    { q: "How is the 2022 vintage in the North Coast generally characterized?", a: "A 'tale of two harvests' with a severe heatwave, making quality variable", o: ["A uniformly cool and elegant vintage", "A perfect, balanced vintage with large yields", "A complete washout due to rain"], subjectType: 'vintage', subjectName: '2022 North Coast Vintage' },
+                    { q: "Which of these is a 'Rising Star' from Lake County, focusing on biodynamically farmed Cabernet Sauvignon?", a: "Hawk and Horse Vineyards", o: ["Shannon Family of Wines", "Gregory Graham Wines", "Brassfield Estate Winery"], subjectType: 'producer', subjectName: 'Hawk and Horse Vineyards' },
+                    { q: "The 2012 vintage marked a return to a 'classic' California vintage after two cool years, producing wines that were...", a: "Ripe, balanced, and accessible", o: ["Lean, acidic, and austere", "Powerful, tannic, and needing age", "Simple and fruity for early drinking"], subjectType: 'vintage', subjectName: '2012 North Coast Vintage' },
+                    { q: "Which producer is a benchmark for Sonoma Chardonnay and Pinot Noir, with a cult-like following for their single-vineyard wines?", a: "Aubert Wines", o: ["St. Francis Winery", "Cline Family Cellars", "J Vineyards & Winery"], subjectType: 'producer', subjectName: 'Aubert Wines' },
+                    { q: "Which of these is a long-standing, family-owned 'Value Champion' in Suisun Valley?", a: "Wooden Valley Winery", o: ["Caymus-Suisun", "Tolenas Vineyards", "Vezer Family Vineyard"], subjectType: 'producer', subjectName: 'Wooden Valley Winery' },
+                    { q: "The 2017 vintage was complicated by a Labor Day heatwave and what other major event?", a: "Devastating October wildfires", o: ["An early frost", "A hailstorm", "A tropical storm"], subjectType: 'vintage', subjectName: '2017 North Coast Vintage' },
+                    { q: "Which producer is a benchmark for the traditionalist, terroir-driven style of Sonoma Pinot Noir and Chardonnay?", a: "Littorai Wines", o: ["Kosta Browne", "Marcassin", "Peter Michael Winery"], subjectType: 'producer', subjectName: 'Littorai Wines' },
+                    { q: "Which of these is a 'Rising Star' known for highly acclaimed, cool-climate Syrah from the Yorkville Highlands?", a: "Halcon Vineyards", o: ["Copain Wines", "Drew Family Wines", "Arista Winery"], subjectType: 'producer', subjectName: 'Halcon Vineyards' },
+                    { q: "The 2019 vintage is highly regarded for producing wines with what characteristics?", a: "Elegance, aromatic complexity, and vibrant acidity", o: ["Power, concentration, and high alcohol", "Simple fruit and soft tannins", "Savory, herbal, and lean profiles"], subjectType: 'vintage', subjectName: '2019 North Coast Vintage' },
+                    { q: "Which producer is an icon for its powerful, opulent, and highly-sought-after Chardonnays and Pinot Noirs, often associated with critic Robert Parker?", a: "Marcassin", o: ["Littorai Wines", "Hanzell Vineyards", "Ceritas"], subjectType: 'producer', subjectName: 'Marcassin' },
+                    { q: "Which of these is a 'Value Champion' from Mendocino known for excellent aromatic whites and Pinot Noir?", a: "Navarro Vineyards", o: ["Roederer Estate", "Goldeneye Winery", "Drew Family Wines"], subjectType: 'producer', subjectName: 'Navarro Vineyards' },
+                    { q: "The 2007 vintage in the North Coast is known for producing what style of wines?", a: "Ripe, powerful, and critically acclaimed", o: ["Cool, elegant, and high-acid", "Variable and inconsistent", "Light and simple for early drinking"], subjectType: 'vintage', subjectName: '2007 North Coast Vintage' },
+                    { q: "Which producer is a historical benchmark for Sonoma Mountain Cabernet Sauvignon?", a: "Laurel Glen Vineyard", o: ["Silver Oak Cellars", "Jordan Vineyard & Winery", "Stonestreet Estate Vineyards"], subjectType: 'producer', subjectName: 'Laurel Glen Vineyard' }
+                ]
+            },
+        };
+
+        // This new object contains comprehensive flashcard data, separate from the quiz questions
+        const flashcardData = {
+            historian: [
+                { q: "In what year did Russian colonists plant the first recorded Vitis vinifera vines in Sonoma County at Fort Ross?", a: "1812" },
+                { q: "Who planted the first significant vineyards for winemaking at Mission San Francisco Solano in 1823?", a: "Father Jose Altamira" },
+                { q: "Who is often called the 'Father of California Viticulture' and founded Buena Vista Winery in 1857?", a: "Agoston Haraszthy" },
+                { q: "In what year was phylloxera first identified in California, at Buena Vista winery?", a: "1873" },
+                { q: "How many of Sonoma County's 256 wineries survived Prohibition (1920-1933)?", a: "Fewer than 50" },
+                { q: "Which Sonoma estate has the oldest continually producing Pinot Noir and Chardonnay vineyard in North America, planted in 1953?", a: "Hanzell Vineyards" },
+                { q: "The 1976 Judgment of Paris winning Chardonnay from Chateau Montelena was composed of nearly 75% fruit from where?", a: "Sonoma County" },
+                { q: "Which winery released Sonoma's first single-vineyard designated Cabernet Sauvignon in 1976?", a: "Rodney Strong (Alexander’s Crown)" },
+                { q: "What was Sonoma County's first federally recognized AVA, established in 1981?", a: "Sonoma Valley" },
+                { q: "In what year were the important Russian River Valley and Dry Creek Valley AVAs established?", a: "1983" },
+                { q: "The vast and controversial Sonoma Coast AVA was established in what year?", a: "1987" },
+                { q: "Which Champagne house's establishment of Roederer Estate in 1982 was a major endorsement for Anderson Valley?", a: "Louis Roederer" },
+                { q: "Sonoma County's conjunctive labeling law, requiring 'Sonoma County' on the label, went into full effect in what year?", a: "2014" },
+                { q: "The West Sonoma Coast AVA, representing the 'true' coast, was finally established in what year?", a: "2022" },
+                { q: "Who were two key pioneers of Pinot Noir in the Russian River Valley during the 1960s and 70s?", a: "Joe Rochioli Jr. and Joseph Swan" },
+                { q: "Which family founded Iron Horse Vineyards in 1976, establishing a benchmark for California sparkling wine?", a: "Audrey and Barry Sterling" },
+                { q: "Which influential Napa grower began investing heavily in Lake County's Red Hills in 1997, bringing the region immense credibility?", a: "Andy Beckstoffer" },
+                { q: "The Italian Swiss Colony, founded in 1881, was once the world's largest winery and located in which Sonoma town?", a: "Asti" },
+                { q: "What was the Bear Flag Revolt?", a: "An 1846 event where American settlers arrested General Vallejo in Sonoma and declared California an independent republic." },
+                { q: "Which Napa Valley icon's recent investment in Suisun Valley is rapidly elevating that region's profile?", a: "The Wagner Family (Caymus)" },
+                { q: "Which winery is recognized as California's oldest premium commercial winery?", a: "Buena Vista Winery" },
+                { q: "What was the primary crop that replaced many vineyards in Dry Creek and Alexander Valleys during Prohibition?", a: "Prunes" },
+                { q: "Who founded Dry Creek Vineyard in 1972 and championed Sauvignon Blanc in the region?", a: "David Stare" },
+                { q: "What organization, co-founded by Jasmine Hirsch and Rajat Parr, promoted lower-alcohol, terroir-driven wines?", a: "In Pursuit of Balance (IPOB)" },
+                { q: "Which winery is the oldest continually operating méthode champenoise house in North America, founded in 1882?", a: "Korbel" },
+                { q: "The first commercial wine in Lake County was produced in which decade?", a: "1870s" },
+                { q: "Mendocino County's modern wine identity is deeply linked to what agricultural movement?", a: "Organic and sustainable farming" },
+                { q: "Who was the first to plant grapes in the Alexander Valley?", a: "Cyrus Alexander" },
+                { q: "What was the original purpose of the Russian settlement at Fort Ross?", a: "An agricultural outpost to support Russian settlements in Alaska" },
+                { q: "When was the North Coast AVA, which covers six counties including Sonoma, established?", a: "1983" },
+                { q: "Which family is associated with the historic Gundlach Bundschu winery, founded in 1858?", a: "The Bundschu family" },
+                { q: "What was the name of the utopian community that established the Fountaingrove winery in 1875?", a: "The Brotherhood of New Life" },
+                { q: "Which winery is considered the first bonded winery in Anderson Valley, established in 1971?", a: "Husch Vineyards" },
+                { q: "The Suisun Valley AVA in Solano County was established in what year?", a: "1982" },
+                { q: "What was the primary impact of the 2017 and 2020 wildfires on the Sonoma wine industry?", a: "Widespread destruction and the pervasive risk of smoke taint in the wines." },
+                { q: "Who was the legendary winemaker who consulted for Jordan and Beaulieu Vineyard, and helped revive Carneros after Prohibition?", a: "André Tchelistcheff" },
+                { q: "What is the historical significance of the Monte Rosso vineyard?", a: "It is one of California's most famous historic vineyards, with some vines dating to 1886." },
+                { q: "What event in 1849 spurred a massive population increase and created commercial demand for California wine?", a: "The California Gold Rush" },
+                { q: "Which family is a major, quality-focused force in Sonoma wine, owning brands like Kendall-Jackson, Stonestreet, and Vérité?", a: "Jackson Family Wines" },
+                { q: "When did Mendocino County's conjunctive labeling law go into effect?", a: "January 1, 2023" }
+            ],
+            terroir: [
+                { q: "What is the name of the chaotic mix of uplifted seabed rocks (sandstone, shale) that forms the parent material for much of Sonoma's soils?", a: "Franciscan Complex" },
+                { q: "What is the name of the celebrated fine sandy loam soil found in the Russian River Valley, ideal for Pinot Noir?", a: "Goldridge Series" },
+                { q: "The Mayacamas Mountains separate Sonoma from which other famous wine county?", a: "Napa County" },
+                { q: "What is the name of the wind gap that funnels cool fog from the Pacific Ocean into southern Sonoma?", a: "Petaluma Gap" },
+                { q: "The Red Hills AVA in Lake County is defined by its red volcanic soils containing what black, glassy rock?", a: "Obsidian" },
+                { q: "What is the term for the large difference between daytime high and nighttime low temperatures, a key feature of Sonoma's climate?", a: "Diurnal Shift" },
+                { q: "The Huichica soil series, found in Los Carneros, has a high content of what, making it water-retentive and suited for Merlot?", a: "Clay" },
+                { q: "The Anderson Valley in Mendocino has a rare east-west (transverse) orientation that allows it to act as a funnel for what?", a: "Cool ocean fog and breezes" },
+                { q: "High-elevation AVAs like Fort Ross-Seaview and Rockpile are often situated above what climatic feature?", a: "The fog line" },
+                { q: "The Suisun Valley in Solano County is cooled by persistent winds from what body of water?", a: "San Pablo Bay" },
+                { q: "What is the parent material for soils in Knights Valley and Moon Mountain?", a: "Sonoma Volcanics (ancient volcanic rock and ash)" },
+                { q: "The Mendocino Ridge AVA is a non-contiguous AVA, with its legal definition based on what?", a: "An elevation of 1,200 feet or higher" },
+                { q: "The high elevation of Lake County vineyards results in greater exposure to what, leading to thicker grape skins?", a: "UV light" },
+                { q: "The 'Deep End' is a local term for the coolest, most coastal part of which AVA?", a: "Anderson Valley" },
+                { q: "The well-drained, gravelly alluvial soils of Dry Creek and Alexander Valleys are known as what series?", a: "Felta series" },
+                { q: "What is the primary viticultural risk in the cool, foggy Russian River Valley, especially for early-budding varieties?", a: "Spring frost" },
+                { q: "The soils of the Big Valley District in Lake County are primarily composed of what?", a: "Lake-deposited clay and loam" },
+                { q: "Chalk Hill AVA is named for its soils of white volcanic ash, not true chalk. True or False?", a: "True" },
+                { q: "The Wilson Grove Formation is the parent material for Goldridge soils and is primarily composed of what?", a: "Uplifted marine sandstone" },
+                { q: "What is the largest freshwater lake entirely within California, which moderates Lake County's climate?", a: "Clear Lake" },
+                { q: "The 'inversion layer' is a phenomenon where cold air settles on the valley floor. This is common in which AVA?", a: "Russian River Valley" },
+                { q: "The soils of Solano County are part of what large geological province?", a: "Great Valley Geomorphic Province" },
+                { q: "Which Lake County AVA is a transverse valley known for fast winds and wild weather?", a: "High Valley AVA" },
+                { q: "The 'Ricetti bench' in Mendocino's Redwood Valley is known for what color soils?", a: "Crimson red" },
+                { q: "Which AVA is an elevated valley south of Santa Rosa, surrounded by hills, where Merlot is the most planted variety?", a: "Bennett Valley" },
+                { q: "The Russian River is the primary geographical feature defining the Russian River Valley and which other major AVA?", a: "Alexander Valley" },
+                { q: "The Yorkville Highlands AVA in Mendocino is characterized by what kind of soils?", a: "Rocky soils with high gravel content" },
+                { q: "What is the primary reason the West Sonoma Coast is such a challenging place to grow grapes?", a: "Extreme maritime influence (wind, fog, and cold)" },
+                { q: "The cool climate of Los Carneros is due to its proximity to what body of water?", a: "San Pablo Bay" },
+                { q: "The Pine Mountain-Cloverdale Peak AVA is defined by its high elevation, with vineyards starting at what altitude?", a: "1,600 feet" },
+                { q: "Which Sonoma AVA is almost entirely composed of volcanic soils on the western slopes of the Mayacamas?", a: "Moon Mountain District" },
+                { q: "Which river is the primary waterway shaping the terroir of Anderson Valley?", a: "Navarro River" },
+                { q: "What is the primary viticultural risk that has become more frequent and severe due to climate change across the North Coast?", a: "Wildfire and smoke taint" },
+                { q: "The 'shoulders' or 'wings' of a Zinfandel cluster are often thinned to mitigate what problem?", a: "Uneven ripening" },
+                { q: "The Fountaingrove District AVA is located on the western slopes of which mountain range?", a: "Mayacamas Mountains" },
+                { q: "Which two grape varieties are most successful in the cool, foggy Green Valley of Russian River Valley?", a: "Pinot Noir and Chardonnay" },
+                { q: "The Kelsey Bench AVA in Lake County acts as a transition zone between the alluvial valley floor and what?", a: "Elevated volcanic sites" },
+                { q: "What is the general climate classification for the Alexander Valley according to the Winkler Index?", a: "Region III (Moderate to Warm)" },
+                { q: "The Rockpile AVA's terroir is defined by its high elevation (above 800 feet) and what other key feature?", a: "Rocky, shallow soils" },
+                { q: "What is the primary climatic difference between western and eastern Mendocino County?", a: "The west is cool and maritime; the east is warm and in a rain shadow." }
+            ],
+            ampelographer: [
+                { q: "What is the name of the heritage Chardonnay selections known for 'hens and chicks' that are foundational to California Chardonnay?", a: "Wente Selections" },
+                { q: "Which heritage Pinot Noir clone, propagated by Joseph Swan, is prized for its exceptional aromatics?", a: "Swan Clone" },
+                { q: "Zinfandel is genetically identical to which Croatian grape?", a: "Crljenak Kaštelanski (also known as Tribidrag)" },
+                { q: "What is the most planted grape variety in Sonoma County?", a: "Chardonnay" },
+                { q: "Compared to heritage clones, what characteristics are Dijon clones of Pinot Noir (115, 667, 777) known for?", a: "Deeper color and more structured tannins" },
+                { q: "What is the signature grape variety of the Dry Creek Valley AVA?", a: "Zinfandel" },
+                { q: "What is the traditional vine training system for many of Sonoma's old Zinfandel vines?", a: "Head-trained (Gobelet/Bush Vine)" },
+                { q: "What is the most planted red grape variety in Sonoma County?", a: "Pinot Noir" },
+                { q: "The Robert Young clone is a famous Wente selection of Chardonnay from which AVA?", a: "Alexander Valley" },
+                { q: "What is the star red grape of the high-elevation, volcanic Red Hills AVA in Lake County?", a: "Cabernet Sauvignon" },
+                { q: "The Pommard clone of Pinot Noir is known for producing wines with what kind of profile?", a: "Earthy, savory notes and red fruit flavors" },
+                { q: "What is Sonoma County's second-most planted white grape?", a: "Sauvignon Blanc" },
+                { q: "What is the goal of the Zinfandel Heritage Vineyard Project by ZAP and UC Davis?", a: "To identify and preserve superior genetic material from historic old-vine sites" },
+                { q: "What is a signature grape of the Suisun Valley in Solano County?", a: "Petite Sirah" },
+                { q: "Cane pruning is a labor-intensive method commonly used for which two varieties in cool climates?", a: "Pinot Noir and Chardonnay" },
+                { q: "What is the most important grape for traditional method sparkling wine in Anderson Valley?", a: "Pinot Noir" },
+                { q: "What is the primary viticultural challenge of Zinfandel, which complicates harvest decisions?", a: "Uneven ripening within the same cluster" },
+                { q: "What is a 'field blend'?", a: "A wine made from multiple grape varieties that are planted, harvested, and fermented together." },
+                { q: "What is the most planted grape in the cool, coastal Anderson Valley?", a: "Pinot Noir" },
+                { q: "The Sauvignon Musqué clone is known for being more what than other Sauvignon Blanc selections?", a: "Aromatic and floral" },
+                { q: "What is the most planted grape variety overall in Lake County?", a: "Cabernet Sauvignon" },
+                { q: "The success of aromatic whites like Gewürztraminer and Riesling in Anderson Valley is due to what?", a: "The long, cool growing season that preserves their aromatics and acidity" },
+                { q: "What is Sonoma's fourth most planted red grape, which excels in Bennett Valley?", a: "Merlot" },
+                { q: "The Calera clone is another famous 'suitcase' clone of which grape?", a: "Pinot Noir" },
+                { q: "Which Rhône variety is gaining acclaim in the cool, high-elevation sites of the West Sonoma Coast?", a: "Syrah" },
+                { q: "What is the viticultural principle behind high-density planting?", a: "To encourage root competition and reduce individual vine vigor, concentrating flavor." },
+                { q: "What is the most planted grape in the Alexander Valley?", a: "Cabernet Sauvignon" },
+                { q: "Hanzell's historic vineyard contains the oldest continually producing plantings of Pinot Noir and what other grape in North America?", a: "Chardonnay" },
+                { q: "What is a 'teinturier' grape, like Alicante Bouschet, often found in old field blends?", a: "A grape with red-colored pulp and juice" },
+                { q: "Which of these is NOT one of the top 7 most planted grapes in Sonoma: Chardonnay, Pinot Noir, Cabernet Sauvignon, Zinfandel, Merlot, Syrah, Sauvignon Blanc?", a: "Petite Sirah (it is #6 red, but outside top 7 overall)" },
+                { q: "The term 'millerandage' or 'hens and chicks' is a key characteristic of which Chardonnay clone?", a: "Wente Clone" },
+                { q: "Which Italian grape, reflecting Sonoma's heritage, has significant plantings in the county?", a: "Sangiovese" },
+                { q: "Pinot Meunier is grown in Sonoma primarily for what purpose?", a: "As a component in sparkling wine blends" },
+                { q: "The practice of fermenting grapes without de-stemming them is called what?", a: "Whole-cluster fermentation" },
+                { q: "What is the French name for the grape known as Petite Sirah in California?", a: "Durif" },
+                { q: "What is the most planted grape in the windy Petaluma Gap AVA?", a: "Pinot Noir" },
+                { q: "The success of Sauvignon Blanc in Lake County's Big Valley District is attributed to its alluvial soils and what else?", a: "The moderating influence of Clear Lake" },
+                { q: "What is the primary grape used for the Coro Mendocino blend?", a: "Zinfandel" },
+                { q: "What is the most planted grape in the Rockpile AVA?", a: "Zinfandel" },
+                { q: "The term Regulated Deficit Irrigation (RDI) is a technique used to do what?", a: "Impose controlled water stress on vines to concentrate flavors" }
+            ],
+            lawmaker: [
+                { q: "What is the minimum percentage of grapes required from a named AVA for it to be on the label?", a: "85%" },
+                { q: "Sonoma County's conjunctive labeling law requires what to be printed on the label of any wine using a Sonoma AVA?", a: "Sonoma County" },
+                { q: "What is the minimum percentage of grapes required for a single vineyard designation?", a: "95%" },
+                { q: "Which of these is NOT legally mandated for any Sonoma AVA: grape varieties, yields, or geographical boundaries?", a: "Grape varieties and yields" },
+                { q: "Is chaptalization (adding sugar to must) permitted in California?", a: "No, it is not permitted." },
+                { q: "What does the 'Estate Bottled' designation signify?", a: "100% of grapes are from vineyards owned/controlled by the winery in the same AVA, and the wine is made and bottled on-site." },
+                { q: "Mendocino County's conjunctive labeling law went into effect in what year?", a: "2023" },
+                { q: "The large North Coast AVA includes Sonoma, Napa, Mendocino, Lake, Marin, and which other county?", a: "Solano" },
+                { q: "Coro Mendocino is a unique blend that must have what grape as its primary component (40-70%)?", a: "Zinfandel" },
+                { q: "Are there legally mandated aging requirements for wines from Sonoma AVAs?", a: "No, aging is a stylistic choice." },
+                { q: "What is the minimum percentage for a single grape variety to be named on a California wine label?", a: "75%" },
+                { q: "The Mendocino Ridge AVA is a non-contiguous AVA defined by what criterion?", a: "Vineyards must be at an elevation of 1,200 feet or higher." },
+                { q: "What is the name of the federal agency that establishes and regulates AVAs?", a: "Alcohol and Tobacco Tax and Trade Bureau (TTB)" },
+                { q: "What is the smallest AVA in the United States, located in Mendocino County?", a: "Cole Ranch" },
+                { q: "What is the primary purpose of conjunctive labeling laws?", a: "To build the brand equity and recognition of the larger county." },
+                { q: "Unlike European appellations, U.S. AVAs do not regulate what?", a: "Permitted grape varieties, viticultural practices, or winemaking techniques." },
+                { q: "What was the first AVA established in Sonoma County in 1981?", a: "Sonoma Valley" },
+                { q: "The West Sonoma Coast AVA was carved out of which larger AVA?", a: "Sonoma Coast AVA" },
+                { q: "Is acidification (adding tartaric acid) a legal practice in California winemaking?", a: "Yes, it is legal and common to ensure balance." },
+                { q: "Which AVA straddles both Sonoma and Napa counties?", a: "Los Carneros" },
+                { q: "Which AVA is shared between Sonoma and Mendocino counties?", a: "Pine Mountain-Cloverdale Peak" },
+                { q: "What percentage of grapes must come from Sonoma County for a wine to be labeled with that county name?", a: "75%" },
+                { q: "What was the first AVA established in Lake County?", a: "Guenoc Valley" },
+                { q: "The legal definition of an AVA is based on what?", a: "Distinguishing geographic, climatic, and historical features." },
+                { q: "The establishment of the Petaluma Gap AVA was based primarily on what distinguishing feature?", a: "The persistent and defining influence of wind." },
+                { q: "What is the primary legal difference between an AVA and a county appellation?", a: "An AVA is a federally defined grape-growing area; a county is a political boundary with a lower (75%) origin requirement." },
+                { q: "What is the most recently established AVA in Mendocino County (as of mid-2024)?", a: "Comptche" },
+                { q: "Is there a legal definition for 'Old Vine' on a wine label in the U.S.?", a: "No, the term is unregulated." },
+                { q: "What is the TTB's stated alcohol tolerance for a wine at 15% ABV?", a: "±1.0%" },
+                { q: "The 'Sonoma County Sustainable' logo requires that at least 85% of grapes come from a certified sustainable vineyard and what else?", a: "At least 85% of the grapes must be from Sonoma County." }
+            ],
+            gastronome: [
+                { q: "A pan-seared breast of what Petaluma-raised poultry is a classic pairing for Russian River Valley Pinot Noir?", a: "Liberty Duck" },
+                { q: "The briny oysters from Bodega and Tomales Bays are a perfect match for what style of Sonoma wine?", a: "Traditional method sparkling wine" },
+                { q: "What is the name of the heritage apple variety celebrated in Sebastopol?", a: "Gravenstein Apple" },
+                { q: "A rack of Sonoma County lamb is the quintessential pairing for what wine?", a: "Alexander Valley Cabernet Sauvignon" },
+                { q: "Russian River Brewing Company is world-famous for which iconic Double IPA?", a: "Pliny the Elder" },
+                { q: "Laura Chenel is a Sonoma pioneer famous for what type of artisan cheese?", a: "Goat cheese (chèvre)" },
+                { q: "What local winter delicacy pairs classically with a crisp, unoaked Sonoma Chardonnay?", a: "Dungeness Crab" },
+                { q: "Which Rohnert Park distillery is a pioneer in California craft whiskey?", a: "Sonoma Distilling Company" },
+                { q: "What unique flavor does the candy cap mushroom from Mendocino impart, making it popular in desserts?", a: "An intense aroma of maple syrup" },
+                { q: "What is 'Boontling'?", a: "A local folk language from Boonville in Anderson Valley" },
+                { q: "Which major craft brewery, founded in Petaluma, became a national brand known for its IPA?", a: "Lagunitas Brewing Company" },
+                { q: "McEvoy Ranch is a recognized local producer of what product besides wine?", a: "Olive Oil" },
+                { q: "A tangy Sonoma County Sauvignon Blanc is a classic pairing for what local product?", a: "Fresh goat cheese (chèvre)" },
+                { q: "What is Cioppino?", a: "A hearty Italian-American fisherman's stew" },
+                { q: "The annual release of 'Pliny the Younger' is a major event for which brewery?", a: "Russian River Brewing Company" },
+                { q: "The 'California Cheese Trail' is heavily concentrated in which two counties?", a: "Sonoma and Marin" },
+                { q: "What type of beverage is seeing a resurgence in Sonoma, leveraging its history of apple growing?", a: "Hard Cider" },
+                { q: "The farm-to-table ethos of Sonoma cuisine emphasizes what?", a: "Fresh, seasonal, and local ingredients" },
+                { q: "The Temple of Kwan Tai in Mendocino is a monument to the history of which immigrant group?", a: "Chinese immigrants" },
+                { q: "What is the primary agricultural product of Petaluma, apart from grapes?", a: "Eggs and poultry" },
+                { q: "A dry Rosé from Sonoma is a classic pairing for what hearty seafood dish?", a: "Cioppino" },
+                { q: "The Black and Blue Wing Burger is an iconic dish from which North Coast county?", a: "Lake County" },
+                { q: "Which Mendocino distillery, operating since 1983, is a pioneer in craft vodka, rum, and whiskey?", a: "Charbay Distillery" },
+                { q: "The cuisine of Mendocino County is heavily influenced by the Pacific Ocean and what other geographical feature?", a: "Its vast redwood forests" },
+                { q: "A rich, barrel-fermented Sonoma Chardonnay is an ideal pairing for what rich local seafood dish?", a: "Bingo Baked Oysters" },
+                { q: "What is the name of the shallow estuary that provides a cooling influence to Carneros and the Petaluma Gap?", a: "San Pablo Bay" },
+                { q: "Which local herb in Anderson Valley is said by some to be detectable in the region's Pinot Noir?", a: "Pennyroyal" },
+                { q: "Which Solano County brewery, originally founded in 1854, was revived in 2015?", a: "Solano Brewing Company" },
+                { q: "What is the main ingredient in the local Lake County dish, the Black and Blue Wing Burger?", a: "A blend of brisket and Angus beef" },
+                { q: "Which Sonoma company produces a range of artisanal infused simple syrups and bar mixers?", a: "Sonoma Syrup Co." }
+            ],
+            critic: [
+                { q: "Which producer is a benchmark for the rich, full-flavored style of Anderson Valley Pinot Noir?", a: "Goldeneye Winery" },
+                { q: "Which recent Sonoma vintage is being hailed as a 'return to normal,' with a long, cool season and outstanding potential?", a: "2023" },
+                { q: "Which Jackson Family brand produces three of Sonoma's most expensive and acclaimed Bordeaux-style blends: La Joie, La Muse, and Le Désir?", a: "Vérité" },
+                { q: "The 2011 North Coast vintage is generally described as what?", a: "Cool, wet, and challenging, yielding elegant, high-acid wines from top producers." },
+                { q: "Which iconic Napa Valley producer's investment in Suisun Valley has dramatically raised the region's profile?", a: "The Wagner Family (Caymus)" },
+                { q: "Which producer is considered a 'First Growth' of Sonoma, famous for its single-vineyard Chardonnays and Pinot Noirs?", a: "Kistler Vineyards" },
+                { q: "The 2020 vintage in the North Coast was severely impacted by what?", a: "Widespread wildfires and smoke taint" },
+                { q: "Which producer is an icon for Zinfandel, especially from their Lytton Springs vineyard in Dry Creek Valley?", a: "Ridge Vineyards" },
+                { q: "Which Anderson Valley producer, the American outpost of a Champagne house, is a benchmark for U.S. sparkling wine?", a: "Roederer Estate" },
+                { q: "The 2015 North Coast vintage was known for what?", a: "Hot, dry conditions and extremely low yields, resulting in powerful, concentrated wines." },
+                { q: "Which influential Napa grower's investment in the Red Hills AVA brought immediate credibility to Lake County?", a: "Andy Beckstoffer" },
+                { q: "Which producer is a 'Value Champion' renowned for consistently excellent Zinfandel?", a: "Seghesio Family Vineyards" },
+                { q: "Which vintage is celebrated as a superb, balanced, and classic year, similar to 2016 and 2019?", a: "2018" },
+                { q: "Which producer is a 'Rising Star' known for terroir-driven Pinot Noir and Syrah from Mendocino?", a: "Drew Family Wines" },
+                { q: "The 2013 vintage is described as a classic, balanced year that produced what style of wines?", a: "Structured and age-worthy" },
+                { q: "Which producer is a historical icon in Mendocino, being the only local winery to survive Prohibition?", a: "Parducci Wine Cellars" },
+                { q: "Which producer is an icon for Sonoma County Cabernet Sauvignon, with a famous estate in Alexander Valley?", a: "Silver Oak Cellars" },
+                { q: "How is the 2022 North Coast vintage generally characterized?", a: "A 'tale of two harvests' with a severe heatwave, making quality variable." },
+                { q: "Which Lake County 'Rising Star' focuses on biodynamically farmed Cabernet Sauvignon?", a: "Hawk and Horse Vineyards" },
+                { q: "The 2012 vintage was a return to a 'classic' California style after two cool years, producing wines that were what?", a: "Ripe, balanced, and accessible" },
+                { q: "Which producer is a benchmark for powerful, opulent, and highly sought-after Sonoma Chardonnays and Pinot Noirs?", a: "Marcassin" },
+                { q: "Which long-standing Suisun Valley family winery is considered a 'Value Champion'?", a: "Wooden Valley Winery" },
+                { q: "The 2017 vintage was complicated by a Labor Day heatwave and what other major event?", a: "Devastating October wildfires" },
+                { q: "Which producer is a benchmark for the traditionalist, terroir-driven style of Sonoma Pinot Noir?", a: "Littorai Wines" },
+                { q: "Which 'Rising Star' is known for exceptional, cool-climate Syrah from the Yorkville Highlands?", a: "Halcon Vineyards" },
+                { q: "The 2019 vintage is highly regarded for producing wines with what characteristics?", a: "Elegance, aromatic complexity, and vibrant acidity" },
+                { q: "Which producer is a historical benchmark for Sonoma Mountain Cabernet Sauvignon?", a: "Laurel Glen Vineyard" },
+                { q: "Which Mendocino 'Value Champion' is known for excellent aromatic whites and Pinot Noir from Anderson Valley?", a: "Navarro Vineyards" },
+                { q: "The 2007 vintage in the North Coast is known for producing what style of wines?", a: "Ripe, powerful, and critically acclaimed" },
+                { q: "Which producer is an icon of American sparkling wine, with their wines having been served at the White House for decades?", a: "Iron Horse Vineyards" }
+            ]
+        };
+
+        const mainMenu = document.getElementById('main-menu');
+        const gameScreen = document.getElementById('game-screen');
+        const modalContainer = document.getElementById('modal-container');
+        const modalContentWrapper = document.getElementById('modal-content-wrapper');
+        const aiSettingsBtn = document.getElementById('ai-settings-btn');
+
+        let currentModule;
+        let currentQuestionIndex;
+        let score;
+        let questions = [];
+        let userTimeline = [];
+        let historianAvailableEvents = [];
+        let flashcardDeck = [];
+        let currentFlashcardIndex = 0;
+        let userApiKey = localStorage.getItem('geminiApiKey') || '';
+
+        // --- Event Listeners ---
+        document.querySelectorAll('.module-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const module = button.dataset.module;
+                if (module === 'flashcard') {
+                    showFlashcardTopicSelection();
+                } else {
+                    showInstructionalModal(module);
+                }
+            });
+        });
+
+        aiSettingsBtn.addEventListener('click', showAiSettingsModal);
+        
+        // --- Modal Functions ---
+        function showModal(content) {
+            modalContentWrapper.innerHTML = content;
+            modalContainer.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            modalContainer.classList.add('hidden');
+            modalContentWrapper.innerHTML = '';
+        }
+        
+        function showWelcomeModal() {
+            if (sessionStorage.getItem('welcomed')) return;
+            const content = `
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold mb-4 text-purple-400">Welcome to the Gauntlet!</h2>
+                    <p class="mb-4 text-gray-300">This is "Sonoma & the North Coast: A Wine Master's Challenge," an interactive study game designed for advanced wine students.</p>
+                    <p class="mb-6 text-gray-300">Test your knowledge across history, terroir, grapes, law, and more. All questions are derived from a comprehensive research document on the region. Good luck!</p>
+                    <button onclick="closeWelcomeModal()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Begin</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function closeWelcomeModal() {
+            sessionStorage.setItem('welcomed', 'true');
+            hideModal();
+        }
+
+        function showInstructionalModal(module) {
+            currentModule = module;
+            const moduleData = gameData[module];
+            const content = `
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold mb-4 text-purple-400">${moduleData.title}</h2>
+                    <p class="mb-6 text-gray-300">${moduleData.instructions}</p>
+                    <button onclick="startGame()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Start Challenge</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function showEndGameModal() {
+            const moduleData = gameData[currentModule];
+            const content = `
+                <div class="p-6 text-center">
+                    <h2 class="text-2xl font-bold mb-4 text-purple-400">Module Complete!</h2>
+                    <p class="text-lg mb-2 text-gray-300">You completed "${moduleData.title}".</p>
+                    <p class="text-4xl font-bold mb-6">Score: ${score} / ${questions.length}</p>
+                    <div class="flex space-x-4">
+                        <button onclick="startGame()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Keep Going</button>
+                        <button onclick="returnToMenu()" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Main Menu</button>
+                    </div>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function showAiSettingsModal() {
+            const content = `
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-purple-400">AI Settings</h2>
+                        <button onclick="hideModal()" class="text-gray-400 hover:text-white">&times;</button>
+                    </div>
+                    <p class="mb-4 text-gray-300">To use the AI-powered features, please enter your Google AI Studio API key. You can get a key at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-purple-400 hover:underline">aistudio.google.com/app/apikey</a>.</p>
+                    <p class="text-sm text-yellow-400 mb-4">Security Reminder: Treat your API key like a password. It is saved in your browser's local storage for convenience but is not transmitted anywhere else.</p>
+                    <div class="mb-4">
+                        <label for="api-key-input" class="block text-sm font-medium text-gray-300 mb-1">Google AI API Key</label>
+                        <input type="password" id="api-key-input" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white" value="${userApiKey}">
+                    </div>
+                    <button onclick="saveApiKey()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Save and Close</button>
+                </div>
+            `;
+            showModal(content);
+        }
+        
+        function saveApiKey() {
+            userApiKey = document.getElementById('api-key-input').value;
+            localStorage.setItem('geminiApiKey', userApiKey);
+            hideModal();
+        }
+
+        // --- Game Flow ---
+        function startGame() {
+            hideModal();
+            mainMenu.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            score = 0;
+            currentQuestionIndex = 0;
+
+            if (currentModule === 'historian') {
+                questions = shuffleArray([...gameData.historian.questions]).slice(0, 5); // Historian has a fixed number of questions
+                loadHistorianQuestion();
+            } else {
+                const allModuleQuestions = [...gameData[currentModule].questions];
+                const correctLog = JSON.parse(localStorage.getItem('correctlyAnsweredQuestions')) || {};
+                const correctQuestionsForModule = correctLog[currentModule] || [];
+
+                let availableQuestions = allModuleQuestions.filter(q => !correctQuestionsForModule.includes(q.q));
+
+                if (availableQuestions.length === 0 && allModuleQuestions.length > 0) {
+                    const masteryContent = `
+                        <div class="p-6 text-center">
+                            <h2 class="text-2xl font-bold mb-4 text-green-400">Module Mastered!</h2>
+                            <p class="mb-4 text-gray-300">Congratulations! You've correctly answered all questions in this module. Your progress will be reset so you can continue to sharpen your knowledge.</p>
+                            <button onclick="resetAndStartGame()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Play Again</button>
+                        </div>
+                    `;
+                    showModal(masteryContent);
+                    return; 
+                }
+                
+                questions = shuffleArray(availableQuestions).slice(0, 10);
+                loadQuestion();
+            }
+        }
+
+        function resetAndStartGame() {
+            let correctLog = JSON.parse(localStorage.getItem('correctlyAnsweredQuestions')) || {};
+            correctLog[currentModule] = [];
+            localStorage.setItem('correctlyAnsweredQuestions', JSON.stringify(correctLog));
+            startGame();
+        }
+
+        function returnToMenu() {
+            hideModal();
+            gameScreen.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+            gameScreen.innerHTML = '';
+            checkGlobalMastery();
+        }
+
+        // --- Multiple Choice Logic ---
+        function loadQuestion() {
+            if (questions.length === 0 || currentQuestionIndex >= questions.length) {
+                showEndGameModal();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            const options = shuffleArray([q.a, ...q.o]);
+            
+            gameScreen.innerHTML = `
+                <div class="w-full max-w-3xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <button onclick="returnToMenu()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded text-sm">← Menu</button>
+                        <p class="text-right text-gray-400">${currentQuestionIndex + 1} / ${questions.length} | Score: ${score}</p>
+                    </div>
+                    <div class="bg-gray-800 p-8 rounded-lg">
+                        <p class="text-xl md:text-2xl font-medium mb-6">${q.q}</p>
+                        <div class="space-y-4">
+                            ${options.map(option => `
+                                <button class="answer-btn block w-full text-left bg-gray-700 p-4 rounded-lg hover:bg-purple-700 transition-colors duration-200" onclick="checkAnswer('${option.replace(/'/g, "\\'")}')">
+                                    ${option}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div id="feedback-container" class="mt-6"></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function nextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+        
+        function generateAiButtonHtml(question, isCorrect) {
+            if (!question.subjectType || !question.subjectName) {
+                return '';
+            }
+            
+            let buttonText = isCorrect ? `➡️ Dive Deeper on ${question.subjectName}` : `💡 Learn More about ${question.subjectName}`;
+            if (question.subjectType === 'dish' || question.subjectType === 'wine_pairing') {
+                 buttonText = isCorrect ? `➡️ Explain the Pairing for ${question.subjectName}` : `💡 Learn about Pairing with ${question.subjectName}`;
+            }
+
+            return `<button onclick="handleAiRequest('${question.subjectType}', '${question.subjectName.replace(/'/g, "\\'")}')" class="mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded text-sm">${buttonText}</button>`;
+        }
+
+        function checkAnswer(selectedOption) {
+            const q = questions[currentQuestionIndex];
+            const isCorrect = selectedOption === q.a;
+            const feedbackContainer = document.getElementById('feedback-container');
+            
+            let feedbackHtml = '';
+            if (isCorrect) {
+                score++;
+                const questionText = q.q;
+                let correctLog = JSON.parse(localStorage.getItem('correctlyAnsweredQuestions')) || {};
+                if (!correctLog[currentModule]) {
+                    correctLog[currentModule] = [];
+                }
+                if (!correctLog[currentModule].includes(questionText)) {
+                    correctLog[currentModule].push(questionText);
+                }
+                localStorage.setItem('correctlyAnsweredQuestions', JSON.stringify(correctLog));
+
+                feedbackHtml = `<div class="p-4 rounded-lg bg-green-900 border border-green-700">
+                                    <p class="font-bold text-green-300">Correct!</p>
+                                    <p class="text-green-400">${q.a}</p>
+                                    ${generateAiButtonHtml(q, true)}
+                                </div>`;
+            } else {
+                feedbackHtml = `<div class="p-4 rounded-lg bg-red-900 border border-red-700">
+                                    <p class="font-bold text-red-300">Incorrect.</p>
+                                    <p class="text-red-400">The correct answer was: ${q.a}</p>
+                                     ${generateAiButtonHtml(q, false)}
+                                </div>`;
+            }
+
+            feedbackContainer.innerHTML = feedbackHtml;
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.disabled = true;
+                if(btn.innerText === q.a) {
+                    btn.classList.remove('hover:bg-purple-700');
+                    btn.classList.add('bg-green-700');
+                }
+            });
+            feedbackContainer.innerHTML += `<button onclick="nextQuestion()" class="mt-4 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Continue</button>`;
+        }
+        
+        // --- Historian's Scroll Logic ---
+        function loadHistorianQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showEndGameModal();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            userTimeline = [];
+            
+            const eventsWithIds = q.events.map((event, index) => ({ ...event, id: `${currentQuestionIndex}-${index}` }));
+            historianAvailableEvents = shuffleArray(eventsWithIds);
+
+            gameScreen.innerHTML = `
+                <div class="w-full max-w-4xl">
+                    <div class="flex justify-between items-center mb-2">
+                        <button onclick="returnToMenu()" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded text-sm">← Menu</button>
+                        <p class="text-center text-gray-400">Question ${currentQuestionIndex + 1} / ${questions.length} | Score: ${score}</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <p class="text-xl text-center font-medium mb-6">${q.question}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-bold text-lg mb-2 text-purple-400 text-center">Available Events</h3>
+                                <div id="available-events" class="space-y-2">
+                                    ${historianAvailableEvents.map(event => `
+                                        <button data-id="${event.id}" class="timeline-item w-full text-left bg-gray-700 p-3 rounded hover:bg-purple-800 transition-colors duration-200">
+                                            ${event.text}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg mb-2 text-purple-400 text-center">Your Timeline (Earliest to Latest)</h3>
+                                <div id="user-timeline" class="space-y-2 bg-gray-900 p-3 rounded-lg min-h-[200px]"></div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-6">
+                            <button id="submit-timeline" class="bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-8 rounded-lg" onclick="checkTimeline()">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('#available-events .timeline-item').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const eventId = e.currentTarget.dataset.id;
+                    const event = historianAvailableEvents.find(ev => ev.id === eventId);
+                    if (event && !userTimeline.some(e => e.id === event.id)) {
+                        userTimeline.push(event);
+                        e.currentTarget.classList.add('selected', 'opacity-50', 'cursor-not-allowed');
+                        e.currentTarget.disabled = true;
+                        renderUserTimeline();
+                    }
+                });
+            });
+        }
+        
+        function renderUserTimeline() {
+            const timelineContainer = document.getElementById('user-timeline');
+            timelineContainer.innerHTML = userTimeline.map((event, index) => `
+                <div class="bg-purple-900 p-3 rounded flex items-center justify-between">
+                    <span>${index + 1}. ${event.text}</span>
+                    <button class="text-red-400 hover:text-red-200 font-bold" onclick="removeFromTimeline('${event.id}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFromTimeline(eventId) {
+            const indexToRemove = userTimeline.findIndex(event => event.id === eventId);
+
+            if (indexToRemove > -1) {
+                userTimeline.splice(indexToRemove, 1);
+                const buttonToReEnable = document.querySelector(`#available-events .timeline-item[data-id="${eventId}"]`);
+                if (buttonToReEnable) {
+                    buttonToReEnable.disabled = false;
+                    buttonToReEnable.classList.remove('selected', 'opacity-50', 'cursor-not-allowed');
+                }
+                renderUserTimeline();
+            }
+        }
+
+        function checkTimeline() {
+            const q = questions[currentQuestionIndex];
+            const correctTimeline = [...q.events].sort((a, b) => a.date - b.date);
+            let isCompletelyCorrect = userTimeline.length === correctTimeline.length;
+            
+            if (isCompletelyCorrect) {
+                for (let i = 0; i < correctTimeline.length; i++) {
+                    if (userTimeline[i].text !== correctTimeline[i].text) {
+                        isCompletelyCorrect = false;
+                        break;
+                    }
+                }
+            }
+            
+            if(isCompletelyCorrect) {
+                score++;
+            }
+
+            const userTimelineHtml = userTimeline.map((event, i) => {
+                const isEventInCorrectPosition = correctTimeline[i] && correctTimeline[i].text === event.text;
+                const borderColor = isEventInCorrectPosition ? 'border-green-500' : 'border-red-500';
+                return `<li class="p-2 bg-gray-700 rounded border-2 ${borderColor}">${event.text}</li>`;
+            }).join('');
+
+            const correctTimelineHtml = correctTimeline.map(e => 
+                `<li class="p-2 bg-gray-700 rounded border-2 border-green-500">${e.text} <span class="text-gray-400 text-sm">(${e.date})</span></li>`
+            ).join('');
+            
+            const feedbackContent = `
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold mb-4 ${isCompletelyCorrect ? 'text-green-400' : 'text-yellow-400'}">${isCompletelyCorrect ? 'Perfect!' : 'Review Your Timeline'}</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-bold text-lg mb-2 text-purple-400">Your Timeline</h3>
+                            <ol class="list-decimal list-inside space-y-2">
+                                ${userTimelineHtml}
+                            </ol>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg mb-2 text-purple-400">Correct Timeline</h3>
+                            <ol class="list-decimal list-inside space-y-2">
+                                ${correctTimelineHtml}
+                            </ol>
+                        </div>
+                    </div>
+                    <button onclick="nextHistorianQuestion()" class="mt-6 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Continue</button>
+                </div>
+            `;
+            showModal(feedbackContent);
+        }
+
+        function nextHistorianQuestion() {
+            hideModal();
+            currentQuestionIndex++;
+            loadHistorianQuestion();
+        }
+
+        // --- Mastery Logic ---
+        function checkGlobalMastery() {
+            if (sessionStorage.getItem('globalMasteryAcknowledged')) {
+                return;
+            }
+
+            const modulesToMaster = ['terroir', 'ampelographer', 'lawmaker', 'gastronome', 'critic'];
+            const correctLog = JSON.parse(localStorage.getItem('correctlyAnsweredQuestions')) || {};
+            
+            let allMastered = true;
+            for (const module of modulesToMaster) {
+                const totalQuestions = gameData[module].questions.length;
+                const correctlyAnswered = (correctLog[module] || []).length;
+                if (correctlyAnswered < totalQuestions) {
+                    allMastered = false;
+                    break;
+                }
+            }
+
+            if (allMastered) {
+                showGlobalMasteryModal();
+            }
+        }
+
+        function showGlobalMasteryModal() {
+            const content = `
+                <div class="p-6 text-center">
+                    <h2 class="text-2xl font-bold mb-4 text-purple-400">Congratulations, Wine Master!</h2>
+                    <p class="mb-4 text-gray-300">You have demonstrated exceptional knowledge by correctly answering every question across all core modules. You have truly mastered Sonoma & the North Coast!</p>
+                    <p class="mb-6 text-gray-300">To keep your expertise sharp, continue to practice with the <strong>Flashcard Study</strong> decks.</p>
+                    <button onclick="closeGlobalMasteryModal()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Continue</button>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function closeGlobalMasteryModal() {
+            sessionStorage.setItem('globalMasteryAcknowledged', 'true');
+            hideModal();
+        }
+
+        // --- Flashcard Logic ---
+        function showFlashcardTopicSelection() {
+            const topics = Object.keys(flashcardData); // Use flashcardData keys
+            const content = `
+                <div class="p-6">
+                    <h2 class="text-2xl font-bold mb-4 text-purple-400">Build Your Flashcard Deck</h2>
+                    <p class="mb-6 text-gray-300">Select the topics you want to study. These decks cover the entire source document.</p>
+                    <div id="flashcard-topics" class="space-y-2 mb-4">
+                        ${topics.map(topic => `
+                            <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer">
+                                <input type="checkbox" class="form-checkbox h-5 w-5 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500" data-topic="${topic}">
+                                <span class="ml-3 text-white">${gameData[topic].title}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                     <label class="flex items-center bg-gray-700 p-3 rounded-lg hover:bg-gray-600 cursor-pointer mb-6">
+                        <input type="checkbox" id="select-all-topics" class="form-checkbox h-5 w-5 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500">
+                        <span class="ml-3 text-white font-bold">Select All</span>
+                    </label>
+                    <button onclick="startFlashcardSession()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Start Studying</button>
+                </div>
+            `;
+            showModal(content);
+            
+            document.getElementById('select-all-topics').addEventListener('change', (e) => {
+                document.querySelectorAll('#flashcard-topics input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+        }
+
+        function startFlashcardSession() {
+            flashcardDeck = [];
+            const selectedTopics = Array.from(document.querySelectorAll('#flashcard-topics input:checked')).map(cb => cb.dataset.topic);
+
+            if (selectedTopics.length === 0) {
+                // Using a modal instead of alert()
+                showModal(`<div class="p-6 text-center">
+                    <p class="text-lg text-yellow-400 mb-4">Please select at least one topic.</p>
+                    <button onclick="showFlashcardTopicSelection()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Go Back</button>
+                </div>`);
+                return;
+            }
+
+            selectedTopics.forEach(topic => {
+                if (flashcardData[topic]) {
+                    flashcardDeck.push(...flashcardData[topic]);
+                }
+            });
+
+            flashcardDeck = shuffleArray(flashcardDeck);
+            currentFlashcardIndex = 0;
+            hideModal();
+            mainMenu.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+            loadFlashcard();
+        }
+
+        function loadFlashcard() {
+            if (flashcardDeck.length === 0) {
+                gameScreen.innerHTML = `<div class="text-center">
+                    <p class="text-2xl mb-4">No topics selected.</p>
+                    <button onclick="returnToMenu()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Main Menu</button>
+                </div>`;
+                return;
+            }
+            const card = flashcardDeck[currentFlashcardIndex];
+            gameScreen.innerHTML = `
+                <div class="w-full max-w-2xl flex flex-col items-center">
+                    <p class="text-gray-400 mb-4">${currentFlashcardIndex + 1} / ${flashcardDeck.length}</p>
+                    <div class="flashcard-container w-full h-80 mb-6">
+                        <div class="flashcard" onclick="this.classList.toggle('is-flipped')">
+                            <div class="flashcard-face flashcard-front text-2xl font-semibold">${card.q}</div>
+                            <div class="flashcard-face flashcard-back text-xl overflow-y-auto">${card.a}</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between w-full">
+                        <button id="prev-card" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded">&larr; Previous</button>
+                        <button onclick="returnToMenu()" class="bg-red-700 hover:bg-red-600 text-white font-bold py-2 px-6 rounded">End Session</button>
+                        <button id="next-card" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded">Next &rarr;</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('prev-card').addEventListener('click', () => {
+                if (currentFlashcardIndex > 0) {
+                    currentFlashcardIndex--;
+                    loadFlashcard();
+                }
+            });
+            document.getElementById('next-card').addEventListener('click', () => {
+                if (currentFlashcardIndex < flashcardDeck.length - 1) {
+                    currentFlashcardIndex++;
+                    loadFlashcard();
+                }
+            });
+        }
+        
+        // --- AI Integration ---
+        async function handleAiRequest(subjectType, subjectName) {
+            if (!userApiKey) {
+                showModal(`<div class="p-6 text-center">
+                    <h2 class="text-2xl font-bold mb-4 text-yellow-400">API Key Required</h2>
+                    <p class="mb-4 text-gray-300">Please set your Google AI API key in the 'AI Settings' on the main menu to use this feature.</p>
+                    <button onclick="hideModal()" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Close</button>
+                </div>`);
+                return;
+            }
+
+            let prompt;
+            let title;
+            const region = "Sonoma & the North Coast";
+
+            switch (subjectType) {
+                case 'clone':
+                case 'grape':
+                    title = `Ampelography Profile: ${subjectName}`;
+                    prompt = `You are a master ampelographer and wine educator with a specialization in ${region}. Your task is to profile the grape or clone: ${subjectName}. Your response must follow this strict pyramid of importance: 1. The subject's specific expression and role within ${region}. 2. Its general viticultural characteristics as they manifest in ${region}'s climate. 3. Its history within the region. Your entire response must be framed through the lens of ${region}. Synthesize information from authoritative sources, but always prioritize the context of ${region}. Structure your response with the following sections: Overview and History in ${region}, Viticultural Characteristics in ${region}, and Typical ${region} Wine Profile. Format the output in simple HTML.`;
+                    break;
+                case 'wine':
+                case 'producer':
+                case 'vintage':
+                case 'place':
+                case 'wine_style':
+                    title = `Critic's Focus: ${subjectName}`;
+                    prompt = `You are a world-renowned wine critic specializing exclusively in the wines of ${region}. Your task is to write a professional profile for the following iconic ${region} topic: ${subjectName}. Your analysis must adhere to a strict pyramid of importance: 1) The specific subject's style or character. 2) The character of its specific appellation within ${region}. 3) The general characteristics of ${region}. Do not mention wines from other regions unless making a direct, essential stylistic comparison. Synthesize information from authoritative sources like Vinous, and Decanter, but ensure the final note is your own expert synthesis. Format in simple HTML.`;
+                    break;
+                case 'dish':
+                case 'wine_pairing':
+                    title = `Gastronomic Pairing: ${subjectName}`;
+                    prompt = `You are a master sommelier and food theorist specializing in the cuisine and wine of ${region}. Your task is to explain the classic wine pairing for the dish: ${subjectName}. Your explanation must follow this strict pyramid of importance: 1. The specific characteristics of the dish as found in the region. 2. The typical profile of a ${region} wine that pairs with it. 3. The underlying gastronomic principles (complement, contrast, texture) that make the pairing successful within the context of the region's culture. Synthesize information from expert sources, but frame your entire response within the context of ${region}. Format in simple HTML.`;
+                    break;
+                case 'ingredient':
+                case 'gastronomy':
+                case 'culture':
+                    title = `Ingredient Focus: ${subjectName}`;
+                    prompt = `You are a food and wine expert specializing in the cuisine of ${region}. Your task is to provide a detailed overview of the ingredient or cultural topic: ${subjectName}. Your response must follow this strict pyramid of importance: 1. How this subject is used or exists in the local culture of ${region}. 2. Its typical flavor and aromatic profile (if applicable). 3. How its profile might be reflected in or complement the local wines, but do not focus on specific pairings unless it is intrinsic to the subject itself. Synthesize from authoritative sources. Format in simple HTML.`;
+                    break;
+                case 'beverage':
+                    title = `Beverage Profile: ${subjectName}`;
+                    prompt = `You are an expert on the spirits and beers of California, with a specialization in ${region}. Your task is to provide a detailed overview of ${subjectName}. Your response must follow this strict pyramid of importance: 1. How ${subjectName} is made and consumed specifically within ${region}. 2. Its key ingredients and typical flavor profile. 3. Its cultural significance in ${region}. Do not focus on wine pairings unless it is a key part of its consumption. Synthesize information from authoritative sources. Format in simple HTML.`;
+                    break;
+                default:
+                    title = `Expert Overview: ${subjectName}`;
+                    prompt = `You are a wine and food expert specializing in ${region}. Provide a concise and informative overview of the following topic: ${subjectName}, ensuring your response is strictly relevant to its context within ${region}. Format in simple HTML.`;
+            }
+            
+            showModal(`<div class="p-6 text-center">
+                <h2 class="text-2xl font-bold mb-4 text-purple-400">Generating AI Response...</h2>
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto"></div>
+                <p class="mt-4 text-gray-400">Please wait, contacting the master sommelier...</p>
+            </div>`);
+
+            try {
+                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${userApiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message || `API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0]) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    const aiContent = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-2xl font-bold text-purple-400">${title}</h2>
+                                <button onclick="hideModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                            </div>
+                            <div class="prose prose-invert prose-purple max-w-none">${text.replace(/\n/g, '<br>')}</div>
+                        </div>`;
+                    showModal(aiContent);
+                } else {
+                     throw new Error("Invalid response structure from API.");
+                }
+
+            } catch (error) {
+                console.error("AI Generation Error:", error);
+                const errorContent = `
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold mb-4 text-red-400">Error</h2>
+                        <p class="mb-4 text-gray-300">Could not generate AI response. Please check your API key and network connection.</p>
+                        <p class="text-sm text-gray-500 bg-gray-900 p-2 rounded">${error.message}</p>
+                        <button onclick="hideModal()" class="mt-4 w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Close</button>
+                    </div>`;
+                showModal(errorContent);
+            }
+        }
+
+        // --- Utility Functions ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- Initial Load ---
+        window.onload = showWelcomeModal;
+
+    </script>
+</body>
+</html>
